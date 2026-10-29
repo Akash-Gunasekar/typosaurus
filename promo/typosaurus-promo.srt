@@ -1,0 +1,39 @@
+1
+00:00:00,250 --> 00:00:01,880
+Fast thumbs make messy text.
+
+2
+00:00:02,400 --> 00:00:04,404
+Typosaurus fixes it in one tap.
+
+3
+00:00:05,250 --> 00:00:08,425
+Eight AI shortcuts rephrase, translate or reply.
+
+4
+00:00:08,850 --> 00:00:11,975
+Or type /fix, and the text is rewritten in place.
+
+5
+00:00:12,300 --> 00:00:14,340
+Bring your own key from five providers.
+
+6
+00:00:14,550 --> 00:00:16,590
+Reorder the shortcuts, or add your own.
+
+7
+00:00:16,800 --> 00:00:19,035
+There's an emoji panel, and voice typing.
+
+8
+00:00:19,300 --> 00:00:22,795
+Pick your toolbar, theme, accent color, haptics and key height.
+
+9
+00:00:23,000 --> 00:00:24,805
+The home screen walks you through setup.
+
+10
+00:00:25,610 --> 00:00:28,935
+Typosaurus. The AI keyboard that eats typos.

@@ -1,0 +1,7 @@
+node_modules/
+frames/
+beats/
+track.wav
+render.log
+check_*.png
+sheet.png

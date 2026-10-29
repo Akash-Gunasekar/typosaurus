@@ -1,0 +1,530 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:Inter;src:url(Inter.ttf);font-weight:100 900}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#F1EDE5}
+body{font-family:Inter,'Segoe UI Emoji',sans-serif;color:#2C3E50;-webkit-font-smoothing:antialiased}
+#stage{position:absolute;inset:0;overflow:hidden;background:#F1EDE5}
+#world{position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0}
+.a{position:absolute}
+.mask{position:absolute;overflow:hidden;white-space:nowrap;line-height:1.18}
+.mask>span{display:inline-block}
+.disp{font-weight:800;letter-spacing:-0.035em;font-variation-settings:'opsz' 32}
+.key{position:absolute;background:#fff;border-radius:8px;box-shadow:0 1.5px 0 #C9D2DC;display:flex;align-items:center;justify-content:center;font-size:21px;color:#2C3E50}
+.tile{position:absolute;background:#fff;border-radius:22px}
+.ico{position:absolute;left:14px;top:14px;width:44px;height:44px;border-radius:12px;background:#E9EEF4;display:flex;align-items:center;justify-content:center}
+.tt{position:absolute;left:16px;top:72px;font-size:15.5px;font-weight:650}
+.ts{position:absolute;left:16px;top:96px;font-size:13px;color:#5D6D7E;white-space:nowrap}
+.chip{position:absolute;width:42px;height:42px;border-radius:10px;background:#E9EEF4;display:flex;align-items:center;justify-content:center;font-size:20px}
+.row{position:absolute;left:12px;width:416px;height:96px;background:#fff;border-radius:20px}
+.rn{position:absolute;left:20px;top:24px;font-size:18px}
+.rs{position:absolute;left:20px;top:54px;font-size:13px;color:#5D6D7E}
+.mt{position:absolute;background:#fff;border-radius:12px}
+.ml{position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:13.5px;transform-origin:50% 50%}
+.ml b{font-size:24px;font-weight:400}
+</style></head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <filter id="ob" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur id="obg" stdDeviation="0 0"/></filter>
+  <filter id="cb" x="-5%" y="-5%" width="110%" height="110%"><feGaussianBlur id="cbg" stdDeviation="0 0"/></filter>
+</svg>
+<div id="stage"><div id="world"></div></div>
+<script>
+const ACC = '#4A90E2', INK = '#2C3E50', SUB = '#5D6D7E';
+const world = document.getElementById('world');
+function h(tag, cls, style, parent, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (style) e.style.cssText = style;
+  if (html != null) e.innerHTML = html;
+  (parent || world).appendChild(e);
+  return e;
+}
+function line(parent, x, y, size, html, extra) {
+  const m = h('div', 'mask disp', `left:${x}px;top:${y}px;font-size:${size}px;${extra || ''}`, parent);
+  return h('span', '', '', m, html);
+}
+const acc = s => `<span style="color:${ACC}">${s}</span>`;
+
+// ---------- hook ----------
+const hook = h('div', 'a', 'left:0;top:0');
+const H1 = line(hook, 0, 285, 170, 'Fast thumbs.');
+const H2 = line(hook, 0, 485, 170, 'Messy text<span id="dot" style="display:inline-block;width:34px;height:34px;margin-left:14px"></span>');
+
+// ---------- phone ----------
+const PH = { x: 420, y: 76, w: 468, h: 928 };
+const phone = h('div', 'a', `left:${PH.x}px;top:${PH.y}px;width:${PH.w}px;height:${PH.h}px;border-radius:58px;background:${INK};box-shadow:0 40px 80px -30px rgba(44,62,80,.35)`);
+const screen = h('div', 'a', 'left:14px;top:14px;width:440px;height:900px;border-radius:44px;overflow:hidden;background:#F1EDE5', phone);
+const app = h('div', 'a', 'left:0;top:0;width:440px;height:900px', screen);
+h('div', 'a', 'left:0;top:0;width:440px;height:92px;background:#fff', app);
+h('div', 'a disp', 'left:22px;top:36px;font-size:31px;font-weight:700;letter-spacing:-0.025em', app, 'Typosaurus');
+const svg = (p, s = 22) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="${SUB}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const tiles = [
+  ['Defaults', 'Fallback, tone, language', '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>'],
+  ['Privacy', 'What is sent, blocked a…', '<path d="M12 3l7 3v6c0 4-3 7.5-7 9-4-1.5-7-5-7-9V6z"/>'],
+  ['Diagnostics', 'Speed and errors', '<path d="M4 18l5-6 4 3 6-8"/><path d="M17 4l.6 1.4L19 6l-1.4.6L17 8l-.6-1.4L15 6l1.4-.6z"/>'],
+  ['About', 'Version and licenses', '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>'],
+];
+tiles.forEach(([t, s, p], i) => {
+  const e = h('div', 'tile', `left:${i % 2 ? 226 : 12}px;top:${i < 2 ? 104 : 236}px;width:202px;height:120px`, app);
+  h('div', 'ico', '', e, svg(p)); h('div', 'tt', '', e, t); h('div', 'ts', '', e, s);
+});
+const card = h('div', 'tile', 'left:12px;top:368px;width:416px;height:186px', app);
+h('div', 'a disp', 'left:16px;top:18px;font-size:17px;font-weight:700;letter-spacing:-0.01em', card, 'Try it');
+h('div', 'a', `left:16px;top:50px;font-size:12.5px;color:${SUB}`, card, 'Type here with Typosaurus selected, then tap ✨.');
+const field = h('div', 'a', 'left:14px;top:78px;width:388px;height:96px;border:2px solid #AEB9C5;border-radius:10px;overflow:hidden', card);
+const ftxt = 'position:absolute;left:14px;top:12px;width:356px;font-size:17px;line-height:26px;white-space:normal';
+const F_old = h('div', '', ftxt, field, 'pls send teh report tmrw, its really importnt');
+const F_new = h('div', '', ftxt, field, 'Please send the report tomorrow, it’s really important.');
+const F_typed = h('div', '', ftxt + ';white-space:pre', field, '');
+const F_fixed = h('div', '', ftxt, field, 'Please send the report tomorrow.');
+const F_meas = h('span', '', 'position:absolute;left:14px;top:12px;font-size:17px;white-space:pre;visibility:hidden', field, '');
+
+h('div', 'a', 'left:0;top:556px;width:440px;height:344px;background:#F5F7FA', app);
+const chipSlot = h('div', 'chip', 'left:6px;top:563px;transform-origin:50% 50%', app, '✨');
+const ARW = '<span style="font-family:Inter;font-size:21px;color:#2C3E50">↔\uFE0E</span>';
+h('div', 'chip', 'left:54px;top:563px', app, ARW);
+h('div', 'chip', 'left:102px;top:563px', app, '📝');
+const ticons = [
+  '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5c1.8 2 5.2 2 7 0"/><path d="M9 9.5v.5M15 9.5v.5"/>',
+  '<rect x="6" y="5" width="12" height="16" rx="2"/><path d="M9 5V3.5h6V5"/>',
+  '<path d="M6 12h.01M12 12h.01M18 12h.01" stroke-width="3"/>',
+  '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0012 0M12 17v4"/>',
+];
+const tIcon = ticons.map((p, i) => {
+  const e = h('div', 'a', `left:${238 + i * 48}px;top:563px;width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center`, app,
+    svg(p, 24).replace(`stroke="${SUB}"`, `stroke="${INK}"`));
+  return e;
+});
+
+// keyboard
+const kb = h('div', 'a', 'left:0;top:612px;width:440px;height:288px', app);
+const keys = [];
+function key(x, y, w, label, k, row, fs) {
+  const e = h('div', 'key', `left:${x}px;top:${y}px;width:${w}px;height:48px;${fs ? 'font-size:' + fs + 'px' : ''}`, kb, label);
+  e.dataset.k = k; e.row = row; keys.push(e); return e;
+}
+const KW = 38, G = 5;
+'1234567890'.split('').forEach((c, i) => key(8 + i * (KW + G), 4, KW, c, c, 0));
+'qwertyuiop'.split('').forEach((c, i) => key(8 + i * (KW + G), 60, KW, c, c, 1));
+'asdfghjkl'.split('').forEach((c, i) => key(29.5 + i * (KW + G), 116, KW, c, c, 2));
+key(8, 172, 52, '↑', 'shift', 3);
+'zxcvbnm'.split('').forEach((c, i) => key(68 + i * (KW + G), 172, KW, c, c, 3));
+key(380, 172, 52, '⌫', 'del', 3);
+key(8, 228, 66, '?123', 'num', 4, 16);
+key(80, 228, KW, ',', ',', 4);
+key(124, 228, 188, '<span style="font-size:15px">space</span>', ' ', 4);
+key(318, 228, KW, '.', '.', 4);
+key(362, 228, 70, '↵', 'enter', 4);
+
+// shortcut panel
+const SC_NAMES = [['✨', 'Fix'], ['↔', 'Rephrase'], ['📝', 'Detail'], ['✂️', 'Shorten'], ['🎭', 'Tone'], ['🌐', 'Translate'], ['💬', 'Reply'], ['🤖', 'Ask']];
+const mTiles = SC_NAMES.map((_, i) => h('div', 'mt', 'visibility:hidden', app));
+const mRect = i => [6 + (i % 4) * 107.5, 620 + Math.floor(i / 4) * 80, 101, 72];
+const abc = h('div', 'a', 'left:6px;top:842px;width:72px;height:46px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;transform-origin:50% 50%', app, 'ABC');
+const sett = h('div', 'a', 'left:300px;top:842px;width:132px;height:46px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;gap:8px;font-size:16px;transform-origin:50% 50%', app,
+  svg('<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>', 20).replace(`stroke="${SUB}"`, `stroke="${INK}"`) + 'Settings');
+
+// providers screen
+const prov = h('div', 'a', 'left:0;top:0;width:440px;height:900px;background:#F1EDE5;visibility:hidden', screen);
+h('div', 'a', 'left:0;top:0;width:440px;height:92px;background:#fff', prov);
+h('div', 'a disp', 'left:22px;top:36px;font-size:31px;font-weight:700;letter-spacing:-0.025em', prov, '←&nbsp; Providers');
+h('div', 'a', `left:12px;top:104px;width:416px;font-size:12.5px;line-height:18px;color:${SUB}`, prov,
+  'Bring your own key. Keys are encrypted with the Android Keystore and never leave this phone except to call your chosen provider.');
+const PROVS = [['OpenAI', 'No key'], ['Anthropic &nbsp;·&nbsp; default', 'Key saved · claude-sonnet-5'], ['Groq', 'No key'], ['OpenRouter', 'No key'], ['Ollama Cloud', 'No key'], ['Custom (OpenAI-compatible)', 'No key needed']];
+const rows = PROVS.map(([n, s], i) => {
+  const r = h('div', 'row', `top:${164 + i * 110}px`, prov);
+  h('div', 'rn', '', r, n); h('div', 'rs', '', r, s);
+  h('div', 'a', `right:22px;top:36px;font-size:20px;color:${SUB}`, r, '›');
+  return r;
+});
+
+// README screenshots (420 x 845) shown inside the phone at 440 px wide
+const K = 440 / 420;
+function shot(parent, n, css) {
+  const e = h('img', 'a', `left:0;top:0;width:440px;${css || ''}`, parent);
+  e.src = `../docs/screenshots/${n}.png`;
+  return e;
+}
+const layer = () => h('div', 'a', 'left:0;top:0;width:440px;height:900px;overflow:hidden;background:#F1EDE5;visibility:hidden', screen);
+const sShort = layer(); shot(sShort, 'shortcuts');
+const sEmoji = layer(); shot(sEmoji, 'emoji');
+const sVoice = layer(); shot(sVoice, 'voice');
+// keyboard settings: the look-sound shot continues the toolbar shot 382 px further down
+const sKb = layer();
+const kbScroll = h('div', 'a', 'left:0;top:0;width:440px', sKb);
+shot(kbScroll, 'keyboard-toolbar-voice');
+shot(h('div', 'a', `left:0;top:${448 * K}px;width:440px;height:${779 * K}px;overflow:hidden`, kbScroll), 'keyboard-look-sound', `top:${-66 * K}px`);
+shot(h('div', 'a', `left:0;top:0;width:440px;height:${62 * K}px;overflow:hidden`, sKb), 'keyboard-toolbar-voice');
+const sHome = layer(); shot(sHome, 'home');
+// [layer, entry time, entry: slide (default), cut or fade]
+const SCREENS = [[prov, 11.32, 'cut'], [sShort, 13.45], [sEmoji, 15.85], [sVoice, 17.1, 'fade'], [sKb, 18.3], [sHome, 22.0]];
+
+// gallery of every README screenshot either side of the phone (home stays in the phone)
+const GAL = ['keyboard', 'menu', 'emoji', 'providers', null, 'shortcuts', 'keyboard-toolbar-voice', 'keyboard-look-sound', 'voice'];
+const gal = GAL.map((n, i) => {
+  if (!n) return null;
+  const g = h('div', 'a', `left:${PH.x + (i - 4) * 540}px;top:${PH.y}px;width:${PH.w}px;height:${PH.h}px;border-radius:58px;background:${INK};visibility:hidden`);
+  shot(h('div', 'a', 'left:14px;top:14px;width:440px;height:900px;border-radius:44px;overflow:hidden;background:#F1EDE5', g), n);
+  return [g, i];
+}).filter(Boolean);
+
+// ---------- captions ----------
+const cap = h('div', 'a', 'left:0;top:0');
+const C1a = line(cap, 1000, 440, 92, 'Fix it in');
+const C1b = line(cap, 1000, 548, 92, acc('one tap.'));
+const C2a = line(cap, 1000, 640, 62, 'Eight shortcuts.');
+const C2w = ['Rephrase.', 'Translate.', 'Reply.'].map(w => line(cap, 1000, 712, 116, acc(w)));
+const C3a = line(cap, 975, 462, 70, 'Or just type');
+const C3b = line(cap, 975, 548, 124, acc('/fix'));
+const C3c = line(cap, 975, 712, 34, 'and it’s rewritten in place.', `font-weight:500;letter-spacing:-0.01em;color:${SUB}`);
+const C4a = line(cap, 1010, 380, 124, 'Bring your');
+const C4b = line(cap, 1010, 520, 124, acc('own key.'));
+const M1a = line(cap, 1000, 440, 92, 'Reorder.');
+const M1b = line(cap, 1000, 548, 92, acc('Add your own.'));
+const M2a = line(cap, 1000, 440, 92, 'Emoji panel.');
+const M2b = line(cap, 1000, 548, 92, acc('Voice typing.'));
+const M3a = line(cap, 1000, 470, 62, 'Make it yours.');
+const M3T = [18.69, 19.37, 19.93, 20.79, 21.35];
+const M3w = ['Toolbar.', 'Theme.', 'Accent.', 'Haptics.', 'Key height.'].map(w => line(cap, 1000, 545, 116, acc(w)));
+const M4a = line(cap, 1000, 440, 92, 'Guided');
+const M4b = line(cap, 1000, 548, 92, acc('setup.'));
+
+// ---------- end card ----------
+const EC = 4400;
+const end = h('div', 'a', 'left:0;top:0');
+const E1 = line(end, EC - 800, 556, 150, 'Typosaurus', 'width:1600px;text-align:center;letter-spacing:-0.04em');
+const E2 = line(end, EC - 800, 760, 30, `THE AI KEYBOARD THAT ${acc('EATS TYPOS')}`, 'width:1600px;text-align:center;font-weight:650;letter-spacing:0.28em');
+const E3 = line(end, EC - 800, 836, 27, 'by Akash Gunasekar &nbsp;·&nbsp; github.com/Akash-Gunasekar/typosaurus', `width:1600px;text-align:center;font-weight:500;letter-spacing:0;color:${SUB}`);
+
+// ---------- through-line object + overlay + cursor ----------
+const obj = h('div', 'a', `background:${ACC};left:0;top:0`);
+const over = h('div', 'a', 'left:0;top:0');
+const ovChip = h('div', 'a', 'width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:21px;transform-origin:50% 50%', over, '✨');
+const ovLabels = SC_NAMES.map(([e, n]) => h('div', 'ml', '', over, `<b>${e === '↔' ? '<span style="font-family:Inter">↔\uFE0E</span>' : e}</b>${n}`));
+const ovFix = h('div', 'a', 'font-size:17px;line-height:26px;color:#fff;white-space:pre', over, '');
+const logo = h('img', 'a', `left:${EC - 150}px;top:230px;width:300px;height:300px;border-radius:50%`, over);
+logo.src = 'logo-round.png';
+const cur = h('div', 'a', 'left:0;top:0;width:30px;height:40px;transform-origin:0 0', null,
+  '<svg width="30" height="40" viewBox="0 0 30 40"><path d="M2 2 L2 31 L9.5 24 L14.5 36 L19.5 34 L14.5 22.5 L25 22.5 Z" fill="#111" stroke="#fff" stroke-width="2.4" stroke-linejoin="round"/></svg>');
+
+// ---------- math ----------
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+function spr(dt, w = 19, z = 0.8) {
+  if (dt <= 0) return 0;
+  const wd = w * Math.sqrt(1 - z * z);
+  return 1 - Math.exp(-z * w * dt) * (Math.cos(wd * dt) + (z * w / wd) * Math.sin(wd * dt));
+}
+const SP = (w, z) => dt => spr(dt, w, z);
+const eio = x => x <= 0 ? 0 : x >= 1 ? 1 : x < .5 ? Math.pow(2, 20 * x - 10) / 2 : (2 - Math.pow(2, -20 * x + 10)) / 2;
+const eout = x => x <= 0 ? 0 : x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+const ein = x => x <= 0 ? 0 : x >= 1 ? 1 : Math.pow(2, 10 * x - 10);
+const EX = d => dt => eio(dt / d);
+const STEP = dt => dt >= 0 ? 1 : 0;
+function track(t, keys) {
+  const v = keys[0][1].slice();
+  for (let i = 1; i < keys.length; i++) {
+    const [ti, vi, f] = keys[i], p = (f || spr)(t - ti);
+    if (p === 0) continue;
+    const pv = keys[i - 1][1];
+    for (let j = 0; j < v.length; j++) v[j] += (vi[j] - pv[j]) * p;
+  }
+  return v;
+}
+// mask line: rises in at tin (spring), leaves upward at tout
+function maskY(t, tin, tout) {
+  if (tout != null && t >= tout) return -118 * ein((t - tout) / 0.2);
+  return 118 * (1 - spr(t - tin, 17, 0.82));
+}
+function setLine(el, t, tin, tout) {
+  const y = maskY(t, tin, tout);
+  el.style.transform = `translateY(${y}%)`;
+  el.parentNode.style.visibility = (t < tin || y <= -117.9) ? 'hidden' : 'inherit';
+}
+function wp(el) {
+  let x = 0, y = 0; const w = el.offsetWidth, hh = el.offsetHeight;
+  while (el && el !== world) { x += el.offsetLeft; y += el.offsetTop; el = el.offsetParent; }
+  return [x, y, w, hh];
+}
+const ctr = r => [r[0] + r[2] / 2, r[1] + r[3] / 2];
+
+// ---------- timeline ----------
+const SC = [0, 2, 5, 8, 11, 13.45, 15.85, 18.3, 22, 23.3, 24.5, 29];
+const CLICKS = [3.0, 4.5, 6.0, 6.5, 7.0, 7.5, 10.0, 12.0, 14.85, 17.1];
+// real seconds -> timeline seconds: the shortcut taps stretch to the narration, then +0.85 s
+const WARP = [[0, 0], [5.0, 5.0], [6.05, 6.0], [6.95, 6.5], [7.79, 7.0], [8.35, 7.5], [8.95, 8.1]];
+function pw(x, a, b) {
+  for (let i = 1; i < WARP.length; i++) if (x < WARP[i][a]) {
+    const p = WARP[i - 1], q = WARP[i];
+    return p[b] + (x - p[a]) * (q[b] - p[b]) / (q[a] - p[a]);
+  }
+  return x + WARP.at(-1)[b] - WARP.at(-1)[a];
+}
+const warp = r => pw(r, 0, 1), unwarp = o => pw(o, 1, 0);
+const DUR = 29.8;
+// narration clips (promo/narration, explainroo + Kokoro) at real seconds
+const VOICE = [['hook', 0.25], ['fix', 2.4], ['shortcuts', 5.25], ['slash', 8.85], ['providers', 12.3], ['custom', 14.55], ['emoji', 16.8], ['settings', 19.3], ['home', 23.0], ['end', 25.61]];
+// explainroo sound effects at timeline seconds
+const SFX = [['pop', 1.0], ['whoosh', 1.5], ['swipe', 2.0], ['click', 3.0], ['sparkle', 3.42], ['click', 4.5], ['whoosh', 5.0, { gain: 0.7 }],
+  ['click', 6.0], ['click', 6.5], ['click', 7.0], ['click', 7.5], ['type', 8.1, { dur: 1.6, gain: 0.35 }], ['click', 10.0], ['sparkle', 10.22],
+  ['swipe', 11.0], ['click', 12.0], ['swipe', 13.45], ['click', 14.85], ['swipe', 15.85], ['click', 17.1], ['blip', 17.12, { pitch: 4 }],
+  ['swipe', 18.3], ['whoosh', 19.55, { gain: 0.6, dur: 0.9 }], ['swipe', 22.0], ['rise', 23.4, { dur: 1.1 }], ['whoosh', 24.5, { dur: 0.6 }], ['chime', 25.0]];
+window.AUDIO = {
+  duration: DUR,
+  voice: VOICE,
+  scenes: SC.slice(1, -1).map(unwarp),
+  sfx: SFX.map(([name, o, x]) => ({ name, t: unwarp(o), ...x })),
+};
+const TYPE_T0 = 8.1, TYPE_DT = 0.064, TYPED = 'pls send report tmrw /fix', SLASH = TYPED.indexOf('/');
+let OBJ, CAM, CUR, L = {};
+
+function init() {
+  // hook lines: centred block
+  const w1 = H1.parentNode.offsetWidth, w2 = H2.parentNode.offsetWidth, hl = 960 - Math.max(w1, w2) / 2;
+  H1.parentNode.style.left = hl + 'px'; H2.parentNode.style.left = hl + 'px';
+  const dot = wp(document.getElementById('dot'));
+  L.h2 = wp(H2.parentNode);
+  const chip = wp(chipSlot), scr = wp(screen);
+  L.chip = chip; L.scr = scr;
+  const S = r => [scr[0] + r[0], scr[1] + r[1], r[2], r[3]];
+  const panel = S([6, 616, 428, 280]);
+  L.panel = panel;
+  L.tiles = SC_NAMES.map((_, i) => S(mRect(i)));
+  const fld = wp(F_typed);
+  L.fo = [fld[0] + 2, fld[1] + 2];
+  const meas = s => { F_meas.textContent = s; return F_meas.offsetWidth; };
+  L.pre = meas(TYPED.slice(0, SLASH));
+  L.typedW = []; for (let i = 0; i <= TYPED.length; i++) L.typedW.push(meas(TYPED.slice(0, i)));
+  L.fixedW = meas('Please send the report tomorrow.');
+  const caret = x => [L.fo[0] + x, L.fo[1], 2.5, 26, 1.25];
+  const pill = n => [L.fo[0] + L.pre - 1, L.fo[1] - 3, L.typedW[SLASH + n] - L.pre + 10, 32, 8];
+  L.rows = rows.map(r => wp(r));
+
+  const dotR = [dot[0], dot[1], dot[2], dot[3], 8];
+  const dc = ctr(dot);
+  const ER = 150, ecy = dot[1] + dot[3] - 62;
+  OBJ = [
+    [0, [dc[0], dc[1], 0, 0, 0]],
+    [1.0, dotR, SP(20, 0.8)],
+    [1.5, [dc[0] - ER / 2 + 20, ecy - ER / 2, ER, ER, 30], SP(22, 0.82)],
+    [1.6, [L.h2[0] - ER - 10, ecy - ER / 2, ER, ER, 30], EX(0.4)],
+    [2.0, [chip[0], chip[1], 42, 42, 10], EX(0.46)],
+    [3.0, [chip[0] + 2, chip[1] + 2, 38, 38, 9], dt => Math.sin(Math.PI * clamp(dt / 0.16))],
+    [5.0, [panel[0], panel[1], panel[2], panel[3], 16], SP(18, 0.85)],
+    [5.42, [...L.tiles[0], 12], SP(18, 0.82)],
+    [6.0, [...L.tiles[1], 12]],
+    [6.5, [...L.tiles[5], 12]],
+    [7.0, [...L.tiles[6], 12]],
+    [7.56, caret(0), EX(0.42)],
+  ];
+  for (let i = 0; i < SLASH; i++) OBJ.push([TYPE_T0 + i * TYPE_DT, caret(L.typedW[i + 1]), STEP]);
+  for (let n = 1; n <= TYPED.length - SLASH; n++) OBJ.push([TYPE_T0 + (SLASH + n - 1) * TYPE_DT, pill(n), n === 1 ? SP(26, 0.85) : SP(30, 0.9)]);
+  OBJ.push([10.0, caret(L.fixedW), SP(18, 0.85)]);
+  OBJ.push([11.0, [scr[0], scr[1], scr[2], scr[3], 44], EX(0.32)]);
+  const r1 = ctr(L.rows[1]);
+  OBJ.push([11.32, [r1[0], r1[1], 0, 0, 0], SP(16, 0.85)]);
+  OBJ.push([24.5, [EC - 158, 222, 316, 316, 158], EX(0.52)]);
+
+  const P = t => Math.pow(1.04, sceneS(t));
+  const cam = (t0, d, cx, cy, z) => [t0, [cx, cy, Math.log(z / P(t0 + d))], EX(d)];
+  CAM = [
+    [0, [960, 540, 0]],
+    cam(2.0, 0.62, 1035, 600, 1.5),
+    cam(5.0, 0.56, 995, 790, 1.6),
+    cam(8.0, 0.56, 944, 640, 1.75),
+    cam(11.0, 0.5, 1035, 540, 1.1),
+    cam(13.45, 0.6, 1000, 470, 1.22),
+    cam(15.85, 0.6, 1000, 600, 1.2),
+    cam(18.3, 0.6, 1020, 540, 1.12),
+    cam(22.0, 0.6, 1000, 520, 1.2),
+    cam(23.3, 0.7, 654, 540, 0.38),
+    cam(24.5, 0.6, EC, 560, 1.0),
+  ];
+  const c = r => ctr(r);
+  const sp = wp(keys.find(k => k.dataset.k === ' '));
+  const mv = (t0, p, d = 0.42) => [t0, [p[0], p[1]], EX(d)];
+  CUR = [
+    [0, [1500, 1180]],
+    mv(2.42, c(chip), 0.55),
+    mv(3.9, c(wp(tIcon[2]))),
+    mv(5.5, c(L.tiles[1])),
+    mv(6.08, c(L.tiles[5]), 0.36),
+    mv(6.58, c(L.tiles[6]), 0.36),
+    mv(7.08, c(wp(abc)), 0.38),
+    mv(7.85, [980, 900], 0.5),
+    mv(9.5, [sp[0] + sp[2] * 0.55, sp[1] + sp[3] / 2], 0.46),
+    mv(10.45, [960, 300], 0.6),
+    mv(11.52, [L.rows[1][0] + 300, L.rows[1][1] + 50], 0.45),
+    mv(14.3, [scr[0] + 98 * K, scr[1] + 149 * K], 0.5),
+    mv(16.5, [scr[0] + 398 * K, scr[1] + 557 * K], 0.5),
+    mv(18.9, [scr[0] + 250 * K, scr[1] + 520 * K], 0.6),
+    mv(22.3, [scr[0] + 99 * K, scr[1] + 304 * K], 0.5),
+    mv(23.15, [scr[0] + 900, scr[1] + 1300], 0.5),
+  ];
+  // pointer tip offset so the tip, not the corner, hits the target
+  L.keyByChar = {}; keys.forEach(k => L.keyByChar[k.dataset.k] = k);
+}
+function sceneS(t) {
+  for (let i = 0; i < SC.length - 1; i++) if (t < SC[i + 1] || i === SC.length - 2) return i + clamp((t - SC[i]) / (SC[i + 1] - SC[i]));
+}
+function camAt(t) {
+  const v = track(t, CAM);
+  return [v[0], v[1], Math.exp(v[2]) * Math.pow(1.04, sceneS(t))];
+}
+const objAt = t => track(t, OBJ);
+const show = (el, on) => el.style.visibility = on ? 'inherit' : 'hidden';
+
+window.seek = function (t) {
+  t = warp(t);
+  // camera
+  const [cx, cy, z] = camAt(t), [px, py, pz] = camAt(t - 1 / 60);
+  world.style.transform = `translate(960px,540px) scale(${z}) translate(${-cx}px,${-cy}px)`;
+  const vx = Math.abs(cx - px) * z, vy = Math.abs(cy - py) * z;
+  const cbx = Math.min(vx * 0.12, 14) / z, cby = Math.min(vy * 0.12, 14) / z;
+  document.getElementById('cbg').setAttribute('stdDeviation', `${cbx.toFixed(2)} ${cby.toFixed(2)}`);
+  world.style.filter = (cbx > 0.25 || cby > 0.25) ? 'url(#cb)' : 'none';
+
+  // hook
+  setLine(H1, t, 0.0, 1.55);
+  setLine(H2, t, 0.5);
+  const o = objAt(t), oc = ctr(o);
+  const h2 = L.h2, cut = clamp(h2[0] + h2[2] - oc[0], 0, h2[2] + 400);
+  H2.parentNode.style.clipPath = t > 1.5 ? `inset(-20% ${cut}px -20% 0)` : 'none';
+  show(hook, t < 2.3);
+
+  // phone reveal from the chip
+  const rr = 1150 * Math.pow(eout((t - 2.1) / 0.62), 1);
+  show(phone, t >= 2.1);
+  phone.style.clipPath = `circle(${rr}px at ${L.chip[0] - PH.x + 21}px ${L.chip[1] - PH.y + 21}px)`;
+
+  // field text
+  const fY = (el, tin, tout) => { el.style.transform = `translateY(${maskY(t, tin, tout) * 1.4}%)`; };
+  fY(F_old, -1, 3.2); fY(F_new, 3.42, 7.7);
+  show(F_old, t < 3.5); show(F_new, t >= 3.42 && t < 7.95);
+  const nTyped = t < TYPE_T0 ? 0 : clamp(Math.floor((t - TYPE_T0) / TYPE_DT) + 1, 0, SLASH);
+  F_typed.textContent = TYPED.slice(0, nTyped);
+  fY(F_typed, -1, 10.02); show(F_typed, t >= TYPE_T0 && t < 10.3);
+  fY(F_fixed, 10.22); show(F_fixed, t >= 10.22);
+
+  // keys: fold out at 5.0, grow back at 7.7; presses while typing and on clicks
+  keys.forEach(k => {
+    let s;
+    if (t < 7.6) s = 1 - ein((t - 5.0 - k.row * 0.03) / 0.2);
+    else s = spr(t - 7.68 - (4 - k.row) * 0.035, 20, 0.85);
+    let press = 0;
+    for (let i = 0; i < TYPED.length; i++) {
+      const ti = TYPE_T0 + i * TYPE_DT;
+      if (TYPED[i].toLowerCase() === k.dataset.k && t >= ti - 0.01 && t < ti + 0.09) press = 1;
+    }
+    if (k.dataset.k === ' ' && t >= 10.0 && t < 10.14) press = 1;
+    k.style.transform = `scale(${s * (1 - press * 0.04)}) translateY(${press * 1.5}px)`;
+    k.style.background = press ? '#DCE2E9' : '#fff';
+    k.style.visibility = s < 0.01 ? 'hidden' : 'visible';
+  });
+  const slotS = spr(t - 5.3, 20, 0.85);
+  show(chipSlot, slotS > 0.01);
+  chipSlot.style.transform = `scale(${slotS})`;
+  tIcon[2].style.background = (t >= 4.5 && t < 7.5) ? '#E9EEF4' : 'transparent';
+
+  // shortcut tiles unfold from the panel, fold at ABC
+  const pr = L.panel, sr = L.scr;
+  mTiles.forEach((m, i) => {
+    const r = mRect(i), pl = [pr[0] - sr[0], pr[1] - sr[1], pr[2], pr[3]];
+    const p = spr(t - 5.42, 18, 0.82);
+    const f = 1 - ein((t - 7.5 - i * 0.025) / 0.2);
+    const x = lerp(pl[0], r[0], p), y = lerp(pl[1], r[1], p), w = lerp(pl[2], r[2], p), hh = lerp(pl[3], r[3], p);
+    show(m, t >= 5.42 && f > 0.01);
+    m.style.cssText += `;left:${x}px;top:${y}px;width:${w}px;height:${hh}px;transform:scale(${f})`;
+  });
+  [abc, sett].forEach((e, i) => {
+    const s = t < 7.5 ? spr(t - 5.5 - i * 0.04, 20, 0.85) : 1 - ein((t - 7.62) / 0.18);
+    const press = (e === abc && t >= 7.5 && t < 7.62) ? 0.06 : 0;
+    e.style.transform = `scale(${Math.max(0, s - press)})`;
+    show(e, s > 0.01);
+  });
+
+  // object
+  show(obj, o[2] > 0.3 && o[3] > 0.3 && !(t > 11.9 && t < 24.5));
+  obj.style.left = o[0] + 'px'; obj.style.top = o[1] + 'px';
+  obj.style.width = o[2] + 'px'; obj.style.height = o[3] + 'px';
+  obj.style.borderRadius = o[4] + 'px';
+  const op = objAt(t - 1 / 60), opc = ctr(op);
+  const ovx = Math.abs(oc[0] - opc[0]) * z, ovy = Math.abs(oc[1] - opc[1]) * z;
+  const bx = Math.min(ovx * 0.15, 18) / z, by = Math.min(ovy * 0.15, 18) / z;
+  document.getElementById('obg').setAttribute('stdDeviation', `${bx.toFixed(2)} ${by.toFixed(2)}`);
+  obj.style.filter = (bx > 0.3 || by > 0.3) ? 'url(#ob)' : 'none';
+
+  // overlay labels that ride on the object
+  const cs = t < 5.0 ? spr(t - 2.36, 20, 0.8) : 1 - ein((t - 5.0) / 0.14);
+  show(ovChip, t > 2.36 && cs > 0.01);
+  ovChip.style.left = L.chip[0] + 'px'; ovChip.style.top = L.chip[1] + 'px';
+  ovChip.style.transform = `scale(${cs * (1 - 0.08 * Math.sin(Math.PI * clamp((t - 3.0) / 0.16)))})`;
+  ovLabels.forEach((e, i) => {
+    const r = L.tiles[i];
+    const s = t < 7.5 ? spr(t - 5.5 - i * 0.03, 20, 0.85) : 1 - ein((t - 7.5 - i * 0.025) / 0.18);
+    show(e, s > 0.01 && t > 5.5);
+    e.style.left = r[0] + 'px'; e.style.top = r[1] + 'px'; e.style.width = r[2] + 'px'; e.style.height = r[3] + 'px';
+    e.style.transform = `scale(${s})`;
+    const on = oc[0] > r[0] && oc[0] < r[0] + r[2] && oc[1] > r[1] && oc[1] < r[1] + r[3];
+    e.style.color = on ? '#fff' : INK;
+  });
+  const nFix = t < TYPE_T0 ? 0 : clamp(Math.floor((t - TYPE_T0) / TYPE_DT) + 1 - SLASH, 0, 4);
+  ovFix.textContent = TYPED.slice(SLASH, SLASH + nFix);
+  ovFix.style.left = (L.fo[0] + L.pre + 4) + 'px'; ovFix.style.top = L.fo[1] + 'px';
+  const fs = 1 - ein((t - 10.0) / 0.12);
+  ovFix.style.transform = `scale(${fs})`; ovFix.style.transformOrigin = '0 50%';
+  show(ovFix, nFix > 0 && fs > 0.01);
+
+  // providers
+  show(app, t < 11.32);
+  if (t >= 11.98 && t < 12.12) rows[1].style.background = '#F3F5F8'; else rows[1].style.background = '#fff';
+
+  // screens: slide in like app navigation, the voice screen fades in as a state change
+  SCREENS.forEach(([el, tin, kind], i) => {
+    const next = SCREENS[i + 1];
+    const pin = kind ? 1 : eio((t - tin) / 0.42);
+    const pout = next && !next[2] ? eio((t - next[1]) / 0.42) : 0;
+    show(el, t >= tin && !(next && t >= next[1] + (next[2] ? 0.15 : 0.42)));
+    el.style.transform = `translateX(${440 * (1 - pin) - 130 * pout}px)`;
+    el.style.opacity = kind === 'fade' ? clamp((t - tin) / 0.15) : 1;
+  });
+  kbScroll.style.transform = `translateY(${-382 * K * eio((t - 19.55) / 0.9)}px)`;
+  gal.forEach(([g, i]) => {
+    const p = spr(t - 23.32 - Math.abs(i - 4) * 0.06, 18, 0.85);
+    show(g, p > 0.01);
+    g.style.transform = `scale(${0.6 + 0.4 * p})`;
+    g.style.opacity = clamp(p);
+  });
+
+  // end: disc reveals the logo
+  const lr = 150 * eout((t - 25.0) / 0.5);
+  show(logo, t > 25.0);
+  logo.style.clipPath = `circle(${lr}px at 50% 50%)`;
+  setLine(E1, t, 25.5); setLine(E2, t, 26.0); setLine(E3, t, 26.5);
+
+  // captions
+  setLine(C1a, t, 3.0, 5.0); setLine(C1b, t, 3.5, 5.04);
+  setLine(C2a, t, 5.5, 7.98);
+  setLine(C2w[0], t, 6.04, 6.42); setLine(C2w[1], t, 6.54, 6.92); setLine(C2w[2], t, 7.04, 8.02);
+  setLine(C3a, t, 8.5, 11.0); setLine(C3b, t, 9.5, 11.04); setLine(C3c, t, 10.5, 11.08);
+  setLine(C4a, t, 11.5, 13.45); setLine(C4b, t, 12.0, 13.49);
+  setLine(M1a, t, 13.75, 15.85); setLine(M1b, t, 14.98, 15.89);
+  setLine(M2a, t, 16.2, 18.3); setLine(M2b, t, 17.31, 18.34);
+  setLine(M3a, t, 18.5, 22.0);
+  M3w.forEach((e, i) => setLine(e, t, M3T[i], i < 4 ? M3T[i + 1] - 0.08 : 22.04));
+  setLine(M4a, t, 22.25, 23.2); setLine(M4b, t, 22.6, 23.24);
+
+  // cursor
+  const cp = track(t, CUR);
+  let press = 0;
+  CLICKS.forEach(c => { if (t >= c && t < c + 0.16) press = Math.sin(Math.PI * (t - c) / 0.16); });
+  show(cur, t > 2.42 && t < 23.4);
+  cur.style.transform = `translate(${cp[0] - 2}px,${cp[1] - 2}px) scale(${1 - 0.16 * press})`;
+};
+window.ready = document.fonts.ready
+  .then(() => Promise.all([...document.images].map(i => i.complete ? 0 : new Promise(r => { i.onload = i.onerror = r; }))))
+  .then(() => { init(); seek(0); return true; });
+</script>
+</body></html>
