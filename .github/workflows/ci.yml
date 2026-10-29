@@ -13,6 +13,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Lint, unit tests (core, data, app), debug build
         run: ./gradlew lintDebug :core:jvmTest :data:testDebugUnitTest :app:testDebugUnitTest assembleDebug
+      - name: Lock the release dependency graph for the scan
+        run: ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --write-locks -q
       - name: Dependency vulnerability scan (OSV)
         run: docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:latest scan source --recursive /src
 

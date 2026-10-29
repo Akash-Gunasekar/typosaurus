@@ -99,29 +99,12 @@ flowchart LR
     an -- "streamed result" --> kb
     kb -- "Accept · Undo" --> app
 
-    classDef ink fill:#050505,stroke:#C6FF3D,color:#F2F5EE,stroke-width:2px
-    classDef lime fill:#C6FF3D,stroke:#2F4A22,color:#050505,stroke-width:2px
-    classDef green fill:#2F4A22,stroke:#C6FF3D,color:#F2F5EE
+    classDef ink fill:#2C3E50,stroke:#4A90E2,color:#F5F7FA,stroke-width:2px
+    classDef blue fill:#4A90E2,stroke:#2C3E50,color:#FFFFFF,stroke-width:2px
+    classDef soft fill:#E9EEF4,stroke:#4A90E2,color:#2C3E50
     class app,oa,an ink
-    class kb,runner lime
-    class prompts,trig,keys,route green
-```
-
-Every AI action goes through the same small state machine, so nothing reaches your text until you accept it:
-
-```mermaid
-stateDiagram-v2
-    direction LR
-    [*] --> Idle
-    Idle --> Streaming: tap ✨ / type /fix␣
-    Streaming --> Preview: result streamed
-    Streaming --> Failed: offline · bad key · timeout
-    Preview --> Applied: Accept
-    Preview --> Streaming: Retry
-    Preview --> Idle: Cancel
-    Applied --> Idle: Undo (5 s) or keep typing
-    Failed --> Streaming: Retry
-    Failed --> Idle: Dismiss
+    class kb,runner blue
+    class prompts,trig,keys,route soft
 ```
 
 | Module | What | Platforms |

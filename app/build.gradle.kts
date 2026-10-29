@@ -76,6 +76,13 @@ android {
     dependenciesInfo { includeInApk = false; includeInBundle = true }
 }
 
+// CI writes app/gradle.lockfile (`--write-locks`) so the OSV scan sees the exact release dependencies.
+// Lenient: a missing or stale lockfile never breaks a local build.
+dependencyLocking { lockMode.set(LockMode.LENIENT) }
+configurations.matching { it.name == "releaseRuntimeClasspath" }.configureEach {
+    resolutionStrategy.activateDependencyLocking()
+}
+
 dependencies {
     implementation(project(":data"))
     implementation(platform(libs.compose.bom))

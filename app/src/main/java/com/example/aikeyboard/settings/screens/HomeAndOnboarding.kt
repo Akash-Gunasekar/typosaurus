@@ -81,27 +81,31 @@ fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
             // The dino sits in the bottom-right corner; text keeps the left side.
             Image(
                 painterResource(R.drawable.header_dino), null,
-                Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.40f), contentScale = ContentScale.Fit,
+                Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.48f), contentScale = ContentScale.Fit,
             )
-            Column(
-                Modifier.fillMaxWidth(0.56f).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-            ) {
-                Text(if (ready) "You're all set" else "Finish setting up", color = PosterInk, style = MaterialTheme.typography.headlineSmall)
+            Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                // Headline and subtitle span the card, one line each.
                 Text(
-                    if (ready) "Tap ✨ on the keyboard in any app" else "A few steps left before AI works",
-                    color = PosterMuted, style = MaterialTheme.typography.bodyMedium,
+                    if (ready) "You're all set" else "Finish setting up", color = PosterInk,
+                    style = MaterialTheme.typography.headlineSmall, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
                 )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    StatusChip("Keyboard", ime.enabled && ime.selected)
-                    StatusChip(provider, hasKey)
-                    StatusChip("Privacy", cfg.consentGiven)
-                }
-                if (!ready) {
-                    Button(
-                        onClick = { nav.navigate("onboarding") },
-                        colors = ButtonDefaults.buttonColors(containerColor = PosterAccent, contentColor = Color.White),
-                    ) { Text("Finish setup") }
+                Text(
+                    if (ready) "Tap ✨ on the keyboard in any app" else "A few steps left before AI works", color = PosterMuted,
+                    style = MaterialTheme.typography.bodyMedium, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
+                )
+                // Chips and the button stay on the left, clear of the dino in the corner.
+                Column(Modifier.fillMaxWidth(0.52f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        StatusChip("Keyboard", ime.enabled && ime.selected)
+                        StatusChip(provider, hasKey)
+                        StatusChip("Privacy", cfg.consentGiven)
+                    }
+                    if (!ready) {
+                        Button(
+                            onClick = { nav.navigate("onboarding") },
+                            colors = ButtonDefaults.buttonColors(containerColor = PosterAccent, contentColor = Color.White),
+                        ) { Text("Finish setup") }
+                    }
                 }
             }
         }
@@ -142,16 +146,20 @@ private class HomeTile(val title: String, val subtitle: String, val icon: ImageV
 @Composable
 private fun TileCard(t: HomeTile, modifier: Modifier, onClick: () -> Unit) {
     Card(onClick = onClick, modifier = modifier, shape = RoundedCornerShape(20.dp)) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Box(
-                Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
-                contentAlignment = Alignment.Center,
-            ) { Icon(t.icon, null, tint = MaterialTheme.colorScheme.primary) }
-            Column {
-                Text(t.title, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-                Text(t.subtitle, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f))
+        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // Icon and name on one line, description underneath.
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(34.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+                    contentAlignment = Alignment.Center,
+                ) { Icon(t.icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary) }
+                Spacer(Modifier.width(10.dp))
+                Text(t.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
+            Text(
+                t.subtitle, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+            )
         }
     }
 }

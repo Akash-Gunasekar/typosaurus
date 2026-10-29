@@ -13,3 +13,5 @@ captures/
 ios/*.xcodeproj/
 xcuserdata/
 DerivedData/
+# Written by CI for the dependency scan
+gradle.lockfile
