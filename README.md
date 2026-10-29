@@ -20,7 +20,12 @@
   </tr>
   <tr>
     <td align="center"><img src="docs/screenshots/home.png" width="180" alt="Home screen"><br><sub>Home</sub></td>
-    <td></td>
+    <td align="center"><img src="docs/screenshots/providers.png" width="180" alt="AI providers"><br><sub>Bring your own key: 5 providers + custom</sub></td>
+    <td align="center"><img src="docs/screenshots/shortcuts.png" width="180" alt="Shortcuts"><br><sub>Shortcuts: reorder, toggle, add your own</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/keyboard-toolbar-voice.png" width="180" alt="Toolbar, voice typing and theme settings"><br><sub>Toolbar buttons, 🎤 voice typing, theme</sub></td>
+    <td align="center"><img src="docs/screenshots/keyboard-look-sound.png" width="180" alt="Accent, sound, haptics and key size"><br><sub>Accent, haptics, sound, key height</sub></td>
     <td></td>
   </tr>
 </table>
