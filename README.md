@@ -8,6 +8,14 @@
   Bring your own key: <b>OpenAI · Anthropic · Groq · OpenRouter · Ollama Cloud</b> or any OpenAI-compatible endpoint.
 </p>
 
+<p align="center">
+  <a href="https://github.com/Akash-Gunasekar/typosaurus/releases/latest/download/typosaurus.apk"><b>⬇ Download for Android</b></a>
+  &nbsp;·&nbsp;
+  <a href="downloads/ios/">iOS: build from source</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/Akash-Gunasekar/typosaurus/releases">All releases</a>
+</p>
+
 ---
 
 ## Screenshots
@@ -43,6 +51,10 @@
 | 🪶 **Small and fast** | 3.3 MB release APK, opens in ~0.4 s; Inter typeface bundled as a 100 KB variable font |
 
 ## Install (Android)
+
+**Easiest:** download the signed APK from the [latest release](https://github.com/Akash-Gunasekar/typosaurus/releases/latest) — step-by-step in [downloads/android](downloads/android/).
+
+To build it yourself instead:
 
 Requires JDK 17+ and the Android SDK (compileSdk 35).
 
