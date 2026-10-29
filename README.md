@@ -20,7 +20,7 @@
 
 ## See it in action
 
-https://github.com/user-attachments/assets/71680184-58f6-41c0-93cf-9ed8924164b7
+https://github.com/user-attachments/assets/b457e95f-9d35-4b12-b5b9-c597341e4275
 
 ## Screenshots
 
