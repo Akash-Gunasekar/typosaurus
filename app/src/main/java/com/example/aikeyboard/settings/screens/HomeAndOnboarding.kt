@@ -6,6 +6,8 @@ import android.view.inputmethod.InputMethodManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -61,6 +63,7 @@ import com.example.aikeyboard.R
 import com.example.aikeyboard.core.provider.ProviderCatalog
 import com.example.aikeyboard.settings.SettingsViewModel
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
     val ctx = LocalContext.current
@@ -72,39 +75,34 @@ fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
     val ready = ime.enabled && ime.selected && cfg.consentGiven && hasKey
 
     ScreenScaffold("Typosaurus", nav, vm) {
-        // ---- status header ---------------------------------------------------------------
-        val accent = MaterialTheme.colorScheme.primary
-        val onAccent = MaterialTheme.colorScheme.onPrimary
-        Column(
-            Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
-                .background(Brush.linearGradient(listOf(accent, lerp(accent, MaterialTheme.colorScheme.secondary, 0.3f))))
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Image(
-                    painterResource(R.drawable.dino_badge), "Typosaurus",
-                    Modifier.size(72.dp).clip(CircleShape), contentScale = ContentScale.Crop,
+        // ---- status header: the launch poster, dino in the corner -------------------------
+        // The artwork is light, so the card keeps the poster's own colours in both themes.
+        Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(PosterBackground)) {
+            // The dino sits in the bottom-right corner; text keeps the left side.
+            Image(
+                painterResource(R.drawable.header_dino), null,
+                Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.40f), contentScale = ContentScale.Fit,
+            )
+            Column(
+                Modifier.fillMaxWidth(0.56f).padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(if (ready) "You're all set" else "Finish setting up", color = PosterInk, style = MaterialTheme.typography.headlineSmall)
+                Text(
+                    if (ready) "Tap ✨ on the keyboard in any app" else "A few steps left before AI works",
+                    color = PosterMuted, style = MaterialTheme.typography.bodyMedium,
                 )
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text(if (ready) "You're all set" else "Finish setting up", color = onAccent, style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        if (ready) "Tap ✨ on the keyboard in any app" else "A few steps left before AI works",
-                        color = onAccent.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyMedium,
-                    )
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    StatusChip("Keyboard", ime.enabled && ime.selected)
+                    StatusChip(provider, hasKey)
+                    StatusChip("Privacy", cfg.consentGiven)
                 }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                StatusChip("Keyboard", ime.enabled && ime.selected)
-                StatusChip(provider, hasKey)
-                StatusChip("Privacy", cfg.consentGiven)
-            }
-            if (!ready) {
-                Button(
-                    onClick = { nav.navigate("onboarding") },
-                    colors = ButtonDefaults.buttonColors(containerColor = onAccent, contentColor = accent),
-                ) { Text("Finish setup") }
+                if (!ready) {
+                    Button(
+                        onClick = { nav.navigate("onboarding") },
+                        colors = ButtonDefaults.buttonColors(containerColor = PosterAccent, contentColor = Color.White),
+                    ) { Text("Finish setup") }
+                }
             }
         }
 
@@ -160,15 +158,23 @@ private fun TileCard(t: HomeTile, modifier: Modifier, onClick: () -> Unit) {
 
 @Composable
 private fun StatusChip(label: String, ok: Boolean) {
-    val onAccent = MaterialTheme.colorScheme.onPrimary
     Row(
-        Modifier.clip(RoundedCornerShape(50)).background(onAccent.copy(alpha = if (ok) 0.22f else 0.12f)).padding(horizontal = 10.dp, vertical = 5.dp),
+        Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.85f)).padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(if (ok) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked, null, Modifier.size(14.dp), tint = onAccent)
-        Text(" $label", color = onAccent, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        Icon(
+            if (ok) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked, null, Modifier.size(14.dp),
+            tint = if (ok) PosterAccent else PosterMuted,
+        )
+        Text(" $label", color = PosterInk, style = MaterialTheme.typography.labelMedium, maxLines = 1)
     }
 }
+
+// Colours of the launch poster (github_banner / header_dino).
+private val PosterBackground = Color(0xFFF2F7FA)
+private val PosterInk = Color(0xFF2C3E50)
+private val PosterMuted = Color(0xFF5D6D7E)
+private val PosterAccent = Color(0xFF4A90E2)
 
 
 @Composable

@@ -5,17 +5,18 @@ private func rgb(_ hex: UInt32) -> Color {
 }
 
 /// Typosaurus palette, shared by the app and the keyboard, matching Android. Follows the phone's appearance.
-/// Light "minimalist": off-white base, white keys, slate-blue action, deep-charcoal text.
+/// Light "minimalist": cream app / off-white keyboard base, white keys, slate-blue action, deep-charcoal text.
 /// Dark "stealth": charcoal base, dark-slate keys, neon-teal action, off-white text.
 struct Palette {
-    let background, surface, key, panel, text, muted, accent, onAccent: Color
+    /// `background` sits under the keyboard; `appBackground` is the app's own (cream in light mode, like the logo).
+    let background, appBackground, surface, key, panel, text, muted, accent, onAccent: Color
 
     static func of(_ scheme: ColorScheme) -> Palette {
         scheme == .dark
-            ? Palette(background: rgb(0x121212), surface: rgb(0x1E1E1E), key: rgb(0x2A2E33), panel: rgb(0x1E1E1E),
-                      text: rgb(0xE0E0E0), muted: rgb(0xA8AFB8), accent: rgb(0x00E676), onAccent: rgb(0x121212))
-            : Palette(background: rgb(0xF5F7FA), surface: .white, key: .white, panel: rgb(0xE9EEF4),
-                      text: rgb(0x2C3E50), muted: rgb(0x5D6D7E), accent: rgb(0x4A90E2), onAccent: .white)
+            ? Palette(background: rgb(0x121212), appBackground: rgb(0x121212), surface: rgb(0x1E1E1E), key: rgb(0x2A2E33),
+                      panel: rgb(0x1E1E1E), text: rgb(0xE0E0E0), muted: rgb(0xA8AFB8), accent: rgb(0x00E676), onAccent: rgb(0x121212))
+            : Palette(background: rgb(0xF5F7FA), appBackground: rgb(0xF1EDE5), surface: .white, key: .white,
+                      panel: rgb(0xE9EEF4), text: rgb(0x2C3E50), muted: rgb(0x5D6D7E), accent: rgb(0x4A90E2), onAccent: .white)
     }
 }
 

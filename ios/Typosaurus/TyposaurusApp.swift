@@ -73,7 +73,7 @@ struct ContentView: View {
                 }
                 .padding(16)
             }
-            .background(p.background.ignoresSafeArea())
+            .background(p.appBackground.ignoresSafeArea())
             .navigationTitle("Typosaurus")
         }
         .tint(p.accent)

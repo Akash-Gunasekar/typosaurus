@@ -20,11 +20,13 @@ import com.example.aikeyboard.core.action.AppSettings
 
 /**
  * Typosaurus palette, shared by the app and the keyboard.
- * Light, "minimalist": off-white base, white keys with a soft shadow, slate-blue action, deep-charcoal text.
+ * Light, "minimalist": cream app background (off-white under the keyboard), white keys with a soft shadow, slate-blue action, deep-charcoal text.
  * Dark, "stealth": charcoal base, dark-slate keys, a vibrant accent (neon teal by default), off-white text.
  */
 object Palette {
     val LightBase = Color(0xFFF5F7FA)
+    /** App background in light mode: the subtle cream of the logo's backdrop. */
+    val Cream = Color(0xFFF1EDE5)
     val LightKey = Color(0xFFFFFFFF)
     val SlateBlue = Color(0xFF4A90E2)
     val Charcoal = Color(0xFF2C3E50)
@@ -95,7 +97,7 @@ private fun typosaurusScheme(dark: Boolean, darkAccent: Color, keyboard: Boolean
             primary = Palette.SlateBlue, onPrimary = Color.White,
             primaryContainer = Color(0xFFDCEBFB), onPrimaryContainer = Color(0xFF1C3F66),
             secondary = Palette.Charcoal, onSecondary = Color.White,
-            background = Palette.LightBase, onBackground = Palette.Charcoal,
+            background = if (keyboard) Palette.LightBase else Palette.Cream, onBackground = Palette.Charcoal,
             surface = Palette.LightKey, onSurface = Palette.Charcoal,
             surfaceVariant = Color(0xFFE9EEF4), onSurfaceVariant = Color(0xFF5D6D7E),
             surfaceContainer = Color.White, surfaceContainerHigh = Color.White, surfaceContainerHighest = Color.White,

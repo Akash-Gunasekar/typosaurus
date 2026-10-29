@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="branding/banner.jpg" alt="Typosaurus — the AI keyboard that eats typos" width="100%">
+  <img src="branding/github_banner.jpg" alt="Typosaurus — the AI keyboard that eats typos" width="100%">
 </p>
 
 <p align="center">
-  <img src="branding/icon.png" alt="Typosaurus icon" width="96"><br>
+  <img src="branding/logo-round.png" alt="Typosaurus icon" width="96"><br>
   <b>Typosaurus</b> — an AI keyboard for Android (and iOS) that fixes, rewrites, translates and replies in any app.<br>
   Bring your own key: <b>OpenAI · Anthropic · Groq · OpenRouter · Ollama Cloud</b> or any OpenAI-compatible endpoint.
 </p>
