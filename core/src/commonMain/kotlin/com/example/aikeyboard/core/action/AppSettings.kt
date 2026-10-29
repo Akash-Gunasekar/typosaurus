@@ -36,6 +36,8 @@ data class AppSettings(
     val keySound: Boolean = false,
     /** Letter pop-up above the key while it is pressed. */
     val keyPopup: Boolean = true,
+    /** English word completions above the keys while typing (bundled list; nothing is learned). */
+    val wordSuggestions: Boolean = true,
     val numberRow: Boolean = true,
     val heightPercent: Int = 100,
     val longPressDelayMs: Int = 350,

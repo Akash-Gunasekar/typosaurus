@@ -120,6 +120,9 @@ fun KeyboardPrefsScreen(vm: SettingsViewModel, nav: NavController) {
         SwitchRow("Haptic feedback", null, cfg.haptics) { v -> vm.update { it.copy(haptics = v) } }
         SwitchRow("Key sound", null, cfg.keySound) { v -> vm.update { it.copy(keySound = v) } }
         SwitchRow("Key pop-up", "Show the letter above your finger while typing", cfg.keyPopup) { v -> vm.update { it.copy(keyPopup = v) } }
+        SwitchRow("Word suggestions", "English completions above the keys. Nothing you type is learned or saved.", cfg.wordSuggestions) { v ->
+            vm.update { it.copy(wordSuggestions = v) }
+        }
         Text("Key height: ${cfg.heightPercent}%")
         Slider(cfg.heightPercent.toFloat(), { v -> vm.update { it.copy(heightPercent = v.toInt()) } }, valueRange = 80f..130f)
         Text("Long-press delay: ${cfg.longPressDelayMs} ms")

@@ -3,6 +3,10 @@ package com.example.aikeyboard.ime.ui
 import android.media.AudioManager
 import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.animation.AnimatedContent
@@ -118,6 +122,8 @@ class KeyboardHandlers(
     val onStartVoice: () -> Unit,
     val onStopVoice: () -> Unit,
     val onCancelVoice: () -> Unit,
+    /** Replace the word being typed with this suggestion. */
+    val onSuggestion: (String) -> Unit,
 )
 
 private enum class Shift { Off, Once, Caps }
@@ -141,6 +147,7 @@ fun KeyboardScreen(
     autoShift: Boolean,
     clips: List<ClipItem>,
     voice: VoiceInput.State,
+    suggestions: List<String>,
     handlers: KeyboardHandlers,
 ) {
     var layer by remember { mutableStateOf(Layer.Letters) }
@@ -179,6 +186,9 @@ fun KeyboardScreen(
     }
 
     val popup = remember { mutableStateOf<KeyPopup?>(null) }
+    var iconsPinned by remember { mutableStateOf(false) }
+    // A finished word (suggestions gone) releases the pin, so the next word shows suggestions again.
+    LaunchedEffect(suggestions.isEmpty()) { if (suggestions.isEmpty()) iconsPinned = false }
     val showPanel = runner is RunnerState.Streaming || runner is RunnerState.Preview || runner is RunnerState.Failed
     // Which bar the top row shows; changes animate (slide up + fade), like the promo's state changes.
     val barMode = when {
@@ -186,6 +196,9 @@ fun KeyboardScreen(
         showPanel -> 1
         runner is RunnerState.Applied -> 2
         pendingArg != null -> 3
+        // While a word is being typed the toolbar becomes the suggestion strip; ‹ brings the icons back
+        // until the next word.
+        suggestions.isNotEmpty() && !iconsPinned && panel == Panel.Keys -> 5
         else -> 4
     }
 
@@ -217,6 +230,11 @@ fun KeyboardScreen(
                             onBack = { pendingArg = null },
                         )
                     }
+                    5 -> SuggestionBar(
+                        suggestions,
+                        onPick = handlers.onSuggestion,
+                        onBackToIcons = { iconsPinned = true },
+                    )
                     else -> Toolbar(
                         quickActions = if (aiAllowed) toolbarActions.take(3) else emptyList(),
                         blockedReason = blockedReason?.label,
@@ -383,6 +401,36 @@ private fun KeyRows(
 }
 
 // ---- bars ---------------------------------------------------------------------------------
+
+/**
+ * Word suggestions, best in the middle (as on most keyboards): [2nd] [1st] [3rd]. The ‹ on the left goes back
+ * to the icon toolbar (✨ Fix and the other shortcuts).
+ */
+@Composable
+private fun SuggestionBar(words: List<String>, onPick: (String) -> Unit, onBackToIcons: () -> Unit) {
+    // While the strip animates out, it is drawn once more with the new (often empty) list.
+    val best = words.firstOrNull() ?: return
+    val order = listOfNotNull(words.getOrNull(1), best, words.getOrNull(2))
+    Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).clickable(onClickLabel = "Show AI shortcuts", onClick = onBackToIcons),
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Show AI shortcuts", tint = MaterialTheme.colorScheme.onSurface) }
+        order.forEachIndexed { i, w ->
+            if (i > 0) Box(Modifier.width(1.dp).height(22.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)))
+            Box(
+                Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(10.dp)).clickable { onPick(w) },
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    w, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 17.sp,
+                    fontWeight = if (w == best) FontWeight.SemiBold else FontWeight.Normal,
+                    color = if (w == best) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                )
+            }
+        }
+    }
+}
 
 /** Icon toolbar: up to three AI shortcuts on the left, feature buttons on the right. */
 @Composable

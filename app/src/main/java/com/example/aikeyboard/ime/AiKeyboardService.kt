@@ -45,6 +45,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import android.text.InputType
+import com.example.aikeyboard.core.suggest.WordSuggester
 
 /**
  * The keyboard. Compose needs a lifecycle, ViewModelStore and SavedStateRegistry on the view tree,
@@ -68,6 +71,10 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
     private val settingsLoaded = MutableStateFlow(false)
     private val unlocked = MutableStateFlow(true)
     private val autoShift = MutableStateFlow(false)
+    /** Word completions for the word being typed (empty when none, or when the field must not get them). */
+    private val suggestions = MutableStateFlow<List<String>>(emptyList())
+    private var suggester: WordSuggester? = null
+    private var suggestionsAllowed = false
     private lateinit var clips: ClipboardHistory
     private lateinit var voice: VoiceInput
     private lateinit var online: StateFlow<Boolean>
@@ -86,6 +93,13 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
         runner = appGraph.newRunner(scope, text)
         clips = ClipboardHistory(this) { appGraph.settings.settings.value.clipboardHistory }.also { it.start() }
         voice = VoiceInput(this, ::commitDictation)
+        // The bundled word list (30k words) loads off the main thread; suggestions start once it is ready.
+        scope.launch {
+            suggester = withContext(Dispatchers.IO) {
+                runCatching { assets.open("words_en.txt").bufferedReader().use { WordSuggester.parse(it.readText()) } }.getOrNull()
+            }
+            refreshSuggestions()
+        }
         online = DeviceState.onlineFlow(this).stateIn(scope, SharingStarted.Eagerly, true)
 
         // Derived, not snapshotted: a blocklist edit (or settings finishing loading) re-evaluates the field.
@@ -128,6 +142,7 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
             onStartVoice = ::startVoice,
             onStopVoice = voice::stop,
             onCancelVoice = voice::cancel,
+            onSuggestion = ::pickSuggestion,
         )
         return ComposeView(this).apply {
             setViewTreeLifecycleOwner(this@AiKeyboardService)
@@ -146,12 +161,13 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
                 val shift by autoShift.collectAsState()
                 val clipItems by clips.items.collectAsState()
                 val voiceState by voice.state.collectAsState()
+                val words by suggestions.collectAsState()
                 KeyboardTheme(cfg) {
                     val bg = MaterialTheme.colorScheme.background
                     LaunchedEffect(bg) { tintNavigationBar(bg.toArgb(), bg.luminance() > 0.5f) }
                     KeyboardScreen(
                         field = field, runner = state, inputTruncated = runner.inputTruncated, online = isOnline,
-                        settings = cfg, actions = actions, autoShift = shift, clips = clipItems, voice = voiceState,
+                        settings = cfg, actions = actions, autoShift = shift, clips = clipItems, voice = voiceState, suggestions = words,
                         handlers = handlers,
                     )
                 }
@@ -164,6 +180,8 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
         if (!restarting) runner.cancel()
         unlocked.value = DeviceState.isUserUnlocked(this)
         editor.value = Editor(info.inputType, info.imeOptions, info.packageName)
+        suggestionsAllowed = suggestionsAllowedIn(info)
+        refreshSuggestions()
         updateAutoShift(info)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_START)
         lifecycleRegistry.handleLifecycleEvent(Lifecycle.Event.ON_RESUME)
@@ -183,6 +201,7 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
     ) {
         super.onUpdateSelection(oldSelStart, oldSelEnd, newSelStart, newSelEnd, candidatesStart, candidatesEnd)
         currentInputEditorInfo?.let(::updateAutoShift)
+        refreshSuggestions() // fires after every edit and cursor move
     }
 
     override fun onDestroy() {
@@ -242,6 +261,37 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
     /** A keyboard can't show the permission dialog itself, so the first tap sends the user to Settings. */
     private fun startVoice() {
         if (voice.hasPermission()) voice.start() else openSettings("keyboard", requestMic = true)
+    }
+
+    /** Text fields only; never in password fields or where the app asked for no suggestions. */
+    private fun suggestionsAllowedIn(info: EditorInfo): Boolean {
+        val type = info.inputType
+        if (type and InputType.TYPE_MASK_CLASS != InputType.TYPE_CLASS_TEXT) return false
+        if (type and InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS != 0) return false
+        val variation = type and InputType.TYPE_MASK_VARIATION
+        return variation != InputType.TYPE_TEXT_VARIATION_PASSWORD &&
+            variation != InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD &&
+            variation != InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD &&
+            variation != InputType.TYPE_TEXT_VARIATION_URI &&
+            variation != InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+    }
+
+    private fun refreshSuggestions() {
+        val s = suggester
+        if (s == null || !suggestionsAllowed || !graph.settings.settings.value.wordSuggestions) {
+            suggestions.value = emptyList()
+            return
+        }
+        val word = WordSuggester.currentWord(text.beforeCursor(48).orEmpty())
+        suggestions.value = if (word == null) emptyList() else s.suggest(word)
+    }
+
+    /** Replace the word being typed with [word] and a space. */
+    private fun pickSuggestion(word: String) {
+        val typed = WordSuggester.currentWord(text.beforeCursor(48).orEmpty()).orEmpty()
+        if (typed.isNotEmpty()) text.deleteBefore(typed.length)
+        text.commit("$word ")
+        refreshSuggestions()
     }
 
     private fun commitDictation(spoken: String) {

@@ -50,6 +50,7 @@ https://github.com/user-attachments/assets/71680184-58f6-41c0-93cf-9ed8924164b7
 | ⚡ **Inline triggers** | Type `pls send report tmrw /fix␣` or `good morning /tr:ta␣` and the text is rewritten in place |
 | 🧩 **Your own shortcuts** | Custom prompts with their own emoji, keyword, provider, model and temperature; import/export as JSON |
 | 👀 **Preview first** | Results stream into a preview: Accept, Retry, Copy or Cancel, then a 5-second Undo |
+| 🔤 **Word suggestions** | English completions above the keys as you type, with a pop-up letter on every key press; ‹ brings back the AI buttons. Nothing you type is learned or saved |
 | 😊 **Emoji, 📋 clipboard, 🎤 voice** | Emoji panel, in-memory clipboard history (API keys and passwords are masked, never kept), voice typing |
 | 🔒 **Private by design** | Text leaves the phone only when you tap an action, straight to *your* provider over HTTPS. Never from password, PIN or incognito fields, or apps you block. No Typosaurus server, no logs |
 | 🪶 **Small and fast** | 3.3 MB release APK, opens in ~0.4 s; Inter typeface bundled as a 100 KB variable font |
@@ -63,7 +64,7 @@ To build it yourself instead:
 Requires JDK 17+ and the Android SDK (compileSdk 35).
 
 ```bash
-./gradlew assembleRelease          # app/build/outputs/apk/release/app-release.apk (~3.3 MB)
+./gradlew assembleRelease          # app/build/outputs/apk/release/app-release.apk (~3.4 MB)
 adb install -r app/build/outputs/apk/release/app-release.apk
 ```
 
