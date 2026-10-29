@@ -13,8 +13,8 @@ android {
         applicationId = "com.example.aikeyboard"
         minSdk = 28
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.1.1"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Only ship English resources; drops the dozens of translations bundled by AndroidX libraries.
         resourceConfigurations += listOf("en")

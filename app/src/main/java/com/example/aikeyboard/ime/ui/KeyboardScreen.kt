@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -148,6 +149,8 @@ fun KeyboardScreen(
     clips: List<ClipItem>,
     voice: VoiceInput.State,
     suggestions: List<String>,
+    /** This field can get word suggestions (text field, not a password/email/URL, setting on, list loaded). */
+    suggestionsAvailable: Boolean,
     handlers: KeyboardHandlers,
 ) {
     var layer by remember { mutableStateOf(Layer.Letters) }
@@ -186,9 +189,9 @@ fun KeyboardScreen(
     }
 
     val popup = remember { mutableStateOf<KeyPopup?>(null) }
-    var iconsPinned by remember { mutableStateOf(false) }
-    // A finished word (suggestions gone) releases the pin, so the next word shows suggestions again.
-    LaunchedEffect(suggestions.isEmpty()) { if (suggestions.isEmpty()) iconsPinned = false }
+    // Suggestion strip or AI icons: only the user switches (‹ on the strip, › on the toolbar). Typing,
+    // finishing a word or starting a new one never flips it.
+    var showSuggestions by remember { mutableStateOf(true) }
     val showPanel = runner is RunnerState.Streaming || runner is RunnerState.Preview || runner is RunnerState.Failed
     // Which bar the top row shows; changes animate (slide up + fade), like the promo's state changes.
     val barMode = when {
@@ -196,9 +199,7 @@ fun KeyboardScreen(
         showPanel -> 1
         runner is RunnerState.Applied -> 2
         pendingArg != null -> 3
-        // While a word is being typed the toolbar becomes the suggestion strip; ‹ brings the icons back
-        // until the next word.
-        suggestions.isNotEmpty() && !iconsPinned && panel == Panel.Keys -> 5
+        suggestionsAvailable && showSuggestions && panel == Panel.Keys -> 5
         else -> 4
     }
 
@@ -233,7 +234,7 @@ fun KeyboardScreen(
                     5 -> SuggestionBar(
                         suggestions,
                         onPick = handlers.onSuggestion,
-                        onBackToIcons = { iconsPinned = true },
+                        onBackToIcons = { showSuggestions = false },
                     )
                     else -> Toolbar(
                         quickActions = if (aiAllowed) toolbarActions.take(3) else emptyList(),
@@ -242,6 +243,7 @@ fun KeyboardScreen(
                         onAction = ::runAction,
                         onPanel = ::toggle,
                         onMic = { panel = Panel.Keys; handlers.onStartVoice() },
+                        onShowSuggestions = if (suggestionsAvailable) ({ panel = Panel.Keys; showSuggestions = true }) else null,
                     )
                 }
             }
@@ -403,19 +405,24 @@ private fun KeyRows(
 // ---- bars ---------------------------------------------------------------------------------
 
 /**
- * Word suggestions, best in the middle (as on most keyboards): [2nd] [1st] [3rd]. The ‹ on the left goes back
- * to the icon toolbar (✨ Fix and the other shortcuts).
+ * Word suggestions, best in the middle (as on most keyboards): [2nd] [1st] [3rd]. It stays up between words;
+ * the ‹ on the left switches to the icon toolbar (✨ Fix and the other shortcuts).
  */
 @Composable
 private fun SuggestionBar(words: List<String>, onPick: (String) -> Unit, onBackToIcons: () -> Unit) {
-    // While the strip animates out, it is drawn once more with the new (often empty) list.
-    val best = words.firstOrNull() ?: return
+    val best = words.firstOrNull()
     val order = listOfNotNull(words.getOrNull(1), best, words.getOrNull(2))
     Row(Modifier.fillMaxWidth().height(48.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)).clickable(onClickLabel = "Show AI shortcuts", onClick = onBackToIcons),
             contentAlignment = Alignment.Center,
         ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowLeft, "Show AI shortcuts", tint = MaterialTheme.colorScheme.onSurface) }
+        if (order.isEmpty()) {
+            Text(
+                "Suggestions appear as you type", Modifier.weight(1f), textAlign = TextAlign.Center, fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
+            )
+        }
         order.forEachIndexed { i, w ->
             if (i > 0) Box(Modifier.width(1.dp).height(22.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)))
             Box(
@@ -444,8 +451,17 @@ private fun Toolbar(
     onAction: (Action) -> Unit,
     onPanel: (Panel) -> Unit,
     onMic: () -> Unit,
+    /** Switch to the word-suggestion strip; null where suggestions are not available. */
+    onShowSuggestions: (() -> Unit)? = null,
 ) {
     Row(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 2.dp), verticalAlignment = Alignment.CenterVertically) {
+        if (onShowSuggestions != null) {
+            Box(
+                Modifier.size(width = 30.dp, height = 40.dp).clip(RoundedCornerShape(10.dp))
+                    .clickable(onClickLabel = "Show word suggestions", onClick = onShowSuggestions),
+                contentAlignment = Alignment.Center,
+            ) { Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, "Show word suggestions", tint = MaterialTheme.colorScheme.onSurface) }
+        }
         if (blockedReason != null) {
             Icon(Icons.Default.Lock, "AI off", Modifier.padding(start = 8.dp).size(18.dp), tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
             Text(

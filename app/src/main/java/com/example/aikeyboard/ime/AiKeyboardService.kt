@@ -73,6 +73,7 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
     private val autoShift = MutableStateFlow(false)
     /** Word completions for the word being typed (empty when none, or when the field must not get them). */
     private val suggestions = MutableStateFlow<List<String>>(emptyList())
+    private val suggestionsAvailable = MutableStateFlow(false)
     private var suggester: WordSuggester? = null
     private var suggestionsAllowed = false
     private lateinit var clips: ClipboardHistory
@@ -162,12 +163,13 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
                 val clipItems by clips.items.collectAsState()
                 val voiceState by voice.state.collectAsState()
                 val words by suggestions.collectAsState()
+                val wordsAvailable by suggestionsAvailable.collectAsState()
                 KeyboardTheme(cfg) {
                     val bg = MaterialTheme.colorScheme.background
                     LaunchedEffect(bg) { tintNavigationBar(bg.toArgb(), bg.luminance() > 0.5f) }
                     KeyboardScreen(
                         field = field, runner = state, inputTruncated = runner.inputTruncated, online = isOnline,
-                        settings = cfg, actions = actions, autoShift = shift, clips = clipItems, voice = voiceState, suggestions = words,
+                        settings = cfg, actions = actions, autoShift = shift, clips = clipItems, voice = voiceState, suggestions = words, suggestionsAvailable = wordsAvailable,
                         handlers = handlers,
                     )
                 }
@@ -278,7 +280,9 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
 
     private fun refreshSuggestions() {
         val s = suggester
-        if (s == null || !suggestionsAllowed || !graph.settings.settings.value.wordSuggestions) {
+        val available = s != null && suggestionsAllowed && graph.settings.settings.value.wordSuggestions
+        suggestionsAvailable.value = available
+        if (s == null || !available) {
             suggestions.value = emptyList()
             return
         }
