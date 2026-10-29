@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="ime_name">AI Shortcut Keyboard</string>
+    <string name="process_text_label">AI Fix</string>
+    <string name="subtype_en_us">English (US)</string>
+    <string name="privacy_policy_url">https://example.com/privacy</string>
+    <string name="keyboard_warning">Android warns that any keyboard can see what you type. This keyboard only sends text to an AI provider when you tap an AI action or finish an inline shortcut, and never from password, PIN or incognito fields.</string>
+</resources>
