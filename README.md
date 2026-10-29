@@ -26,7 +26,7 @@
   <tr>
     <td align="center"><img src="docs/screenshots/keyboard-toolbar-voice.png" width="180" alt="Toolbar, voice typing and theme settings"><br><sub>Toolbar buttons, 🎤 voice typing, theme</sub></td>
     <td align="center"><img src="docs/screenshots/keyboard-look-sound.png" width="180" alt="Accent, sound, haptics and key size"><br><sub>Accent, haptics, sound, key height</sub></td>
-    <td></td>
+    <td align="center"><img src="docs/screenshots/voice.png" width="180" alt="Voice typing"><br><sub>🎤 Voice typing</sub></td>
   </tr>
 </table>
 
