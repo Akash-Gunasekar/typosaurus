@@ -13,7 +13,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.outlined.AutoAwesome
+import androidx.compose.foundation.Image
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material.icons.outlined.Bolt
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Info
@@ -68,26 +71,27 @@ fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
     val hasKey = cfg.defaultProviderId in keys
     val ready = ime.enabled && ime.selected && cfg.consentGiven && hasKey
 
-    ScreenScaffold("AI Shortcut Keyboard", nav, vm) {
+    ScreenScaffold("Typosaurus", nav, vm) {
         // ---- status header ---------------------------------------------------------------
         val accent = MaterialTheme.colorScheme.primary
+        val onAccent = MaterialTheme.colorScheme.onPrimary
         Column(
             Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp))
-                .background(Brush.linearGradient(listOf(accent, accent.copy(alpha = 0.65f))))
+                .background(Brush.linearGradient(listOf(accent, lerp(accent, MaterialTheme.colorScheme.secondary, 0.3f))))
                 .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(44.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center,
-                ) { Icon(Icons.Outlined.AutoAwesome, null, tint = Color.White) }
+                Image(
+                    painterResource(R.mipmap.ic_launcher_foreground), "Typosaurus",
+                    Modifier.size(52.dp).clip(CircleShape), contentScale = ContentScale.Crop,
+                )
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text(if (ready) "You're all set" else "Finish setting up", color = Color.White, style = MaterialTheme.typography.titleLarge)
+                    Text(if (ready) "You're all set" else "Finish setting up", color = onAccent, style = MaterialTheme.typography.titleLarge)
                     Text(
                         if (ready) "Tap ✨ on the keyboard in any app" else "A few steps left before AI works",
-                        color = Color.White.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyMedium,
+                        color = onAccent.copy(alpha = 0.85f), style = MaterialTheme.typography.bodyMedium,
                     )
                 }
             }
@@ -99,7 +103,7 @@ fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
             if (!ready) {
                 Button(
                     onClick = { nav.navigate("onboarding") },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = accent),
+                    colors = ButtonDefaults.buttonColors(containerColor = onAccent, contentColor = accent),
                 ) { Text("Finish setup") }
             }
         }
@@ -126,7 +130,7 @@ fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
         Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Try it", style = MaterialTheme.typography.titleMedium)
-                Hint("Type here with AI Shortcut Keyboard selected, then tap ✨.")
+                Hint("Type here with Typosaurus selected, then tap ✨.")
                 var sample by remember { mutableStateOf("") }
                 OutlinedTextField(sample, { sample = it }, Modifier.fillMaxWidth(), placeholder = { Text("teh cat sat on teh mat") }, minLines = 3)
                 TextButton(onClick = { ctx.getSystemService(InputMethodManager::class.java).showInputMethodPicker() }) { Text("Switch keyboard") }
@@ -156,12 +160,13 @@ private fun TileCard(t: HomeTile, modifier: Modifier, onClick: () -> Unit) {
 
 @Composable
 private fun StatusChip(label: String, ok: Boolean) {
+    val onAccent = MaterialTheme.colorScheme.onPrimary
     Row(
-        Modifier.clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = if (ok) 0.22f else 0.12f)).padding(horizontal = 10.dp, vertical = 5.dp),
+        Modifier.clip(RoundedCornerShape(50)).background(onAccent.copy(alpha = if (ok) 0.22f else 0.12f)).padding(horizontal = 10.dp, vertical = 5.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(if (ok) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked, null, Modifier.size(14.dp), tint = Color.White)
-        Text(" $label", color = Color.White, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        Icon(if (ok) Icons.Default.CheckCircle else Icons.Outlined.RadioButtonUnchecked, null, Modifier.size(14.dp), tint = onAccent)
+        Text(" $label", color = onAccent, style = MaterialTheme.typography.labelMedium, maxLines = 1)
     }
 }
 
@@ -176,7 +181,7 @@ fun OnboardingScreen(vm: SettingsViewModel, nav: NavController) {
 
     ScreenScaffold("Set up", if (nav.previousBackStackEntry != null) nav else null, vm) {
         Step(1, "Enable the keyboard", ime.enabled) {
-            Hint("Turn on “AI Shortcut Keyboard” in the system list.")
+            Hint("Turn on “Typosaurus” in the system list.")
             Button(onClick = { ctx.startActivity(Intent(Settings.ACTION_INPUT_METHOD_SETTINGS)) }) { Text("Open keyboard settings") }
         }
         Step(2, "Select it as your keyboard", ime.selected) {
@@ -184,7 +189,7 @@ fun OnboardingScreen(vm: SettingsViewModel, nav: NavController) {
         }
         Step(3, "Privacy notice", cfg.consentGiven) {
             Text(ctx.getString(R.string.keyboard_warning), style = MaterialTheme.typography.bodyMedium)
-            Hint("• Text goes directly from your phone to the AI provider you choose, over HTTPS. There is no AI Shortcut Keyboard server.\n" +
+            Hint("• Text goes directly from your phone to the AI provider you choose, over HTTPS. There is no Typosaurus server.\n" +
                 "• Each provider has its own retention and training policy (see Privacy).\n" +
                 "• AI is disabled in password, PIN and incognito fields and in apps you block.\n" +
                 "• Nothing is saved or logged by this app.")

@@ -44,7 +44,7 @@ class SettingsRepository(context: Context, scope: CoroutineScope) : SettingsSour
     init {
         scope.launch {
             store.data.catch { e -> if (e is IOException) emit(emptyPreferences()) else throw e }.map { prefs ->
-                val s = prefs[settingsKey]?.let { runCatching { json.decodeFromString(AppSettings.serializer(), it) }.getOrNull() }
+                val s = prefs[settingsKey]?.let { runCatching { json.decodeFromString(AppSettings.serializer(), it).migrated() }.getOrNull() }
                     ?: AppSettings()
                 val a = prefs[actionsKey]?.let { runCatching { json.decodeFromString(ACTIONS, it) }.getOrNull() }
                 s to mergeBuiltIns(a)
@@ -57,7 +57,7 @@ class SettingsRepository(context: Context, scope: CoroutineScope) : SettingsSour
     override suspend fun awaitLoaded() { if (!loaded.value) loaded.first { it } }
 
     suspend fun update(transform: (AppSettings) -> AppSettings) = writeLock.withLock {
-        val next = transform(store.data.first()[settingsKey]?.let { runCatching { json.decodeFromString(AppSettings.serializer(), it) }.getOrNull() } ?: AppSettings())
+        val next = transform(store.data.first()[settingsKey]?.let { runCatching { json.decodeFromString(AppSettings.serializer(), it).migrated() }.getOrNull() } ?: AppSettings())
         store.edit { it[settingsKey] = json.encodeToString(AppSettings.serializer(), next) }
     }
 

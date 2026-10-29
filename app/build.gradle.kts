@@ -36,14 +36,14 @@ android {
     buildTypes {
         debug {
             applicationIdSuffix = ".debug"
-            resValue("string", "app_name", "AI Keyboard (debug)")
+            resValue("string", "app_name", "Typosaurus (debug)")
             buildConfigField("boolean", "ALLOW_BASE_URL_OVERRIDE", "true")
         }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-            resValue("string", "app_name", "AI Shortcut Keyboard")
+            resValue("string", "app_name", "Typosaurus")
             buildConfigField("boolean", "ALLOW_BASE_URL_OVERRIDE", "false")
             // CI signs with the Play upload key; locally fall back to the debug key so the small, fast
             // release build can be installed on a phone for testing (never upload that one to Play).

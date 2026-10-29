@@ -3,7 +3,11 @@ package com.example.aikeyboard.settings
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import android.graphics.Color
+import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
+import com.example.aikeyboard.core.action.AppSettings
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +42,17 @@ class SettingsActivity : ComponentActivity() {
             val vm: SettingsViewModel = viewModel()
             androidx.compose.runtime.LaunchedEffect(Unit) { if (requestMic) vm.requestMic.value = true }
             val cfg by vm.settings.collectAsState()
+            val dark = when (cfg.theme) {
+                AppSettings.Theme.System -> isSystemInDarkTheme()
+                AppSettings.Theme.Light -> false
+                AppSettings.Theme.Dark -> true
+            }
+            // System bar icons follow the app's own theme, not the phone's.
+            androidx.compose.runtime.LaunchedEffect(dark) {
+                val style = if (dark) SystemBarStyle.dark(Color.TRANSPARENT)
+                else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)
+                enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+            }
             AppTheme(cfg) {
                 Surface(color = MaterialTheme.colorScheme.background) {
                     val nav = rememberNavController()

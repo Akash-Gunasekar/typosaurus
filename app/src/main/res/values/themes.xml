@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.AiKeyboard" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.AiKeyboard" parent="android:Theme.Material.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <!-- Brand ink while the first frame loads, so the app never flashes white. -->
+        <item name="android:windowBackground">@color/ic_launcher_background</item>
     </style>
     <style name="Theme.AiKeyboard.Translucent" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
     </style>
-    <color name="ic_launcher_background">#3F51B5</color>
+    <color name="ic_launcher_background">#050505</color>
 </resources>

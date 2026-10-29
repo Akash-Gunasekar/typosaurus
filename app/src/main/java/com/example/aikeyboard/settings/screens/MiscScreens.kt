@@ -71,7 +71,7 @@ fun TriggersScreen(vm: SettingsViewModel, nav: NavController) {
         actions.forEach { a -> Text("${cfg.triggerPrefix}${a.keyword}  →  ${a.icon} ${a.name}") }
         HorizontalDivider()
         SectionTitle("Test field")
-        Hint("Select AI Shortcut Keyboard, then try a trigger here.")
+        Hint("Select Typosaurus, then try a trigger here.")
         OutlinedTextField(sample, { sample = it }, Modifier.fillMaxWidth(), minLines = 3)
     }
 }
@@ -179,7 +179,7 @@ fun AboutScreen(nav: NavController) {
     val ctx = LocalContext.current
     val version = remember { runCatching { ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName }.getOrNull() ?: "?" }
     ScreenScaffold("About", nav) {
-        Text("AI Shortcut Keyboard $version", style = MaterialTheme.typography.titleMedium)
+        Text("Typosaurus $version", style = MaterialTheme.typography.titleMedium)
         Hint("A keyboard with one-tap AI writing shortcuts. Bring your own key.")
         TextButton(onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ctx.getString(R.string.privacy_policy_url)))) }) { Text("Privacy policy") }
         HorizontalDivider()
@@ -187,6 +187,7 @@ fun AboutScreen(nav: NavController) {
         listOf(
             "Kotlin, kotlinx.coroutines, kotlinx.serialization — Apache 2.0",
             "OkHttp — Apache 2.0",
+            "Inter typeface — SIL Open Font License 1.1",
             "AndroidX (Compose, Lifecycle, DataStore, Navigation, Activity) — Apache 2.0",
         ).forEach { Hint(it) }
     }

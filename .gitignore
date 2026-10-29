@@ -9,3 +9,7 @@ local.properties
 captures/
 .cxx/
 .kotlin/
+# Xcode (the project is generated from ios/project.yml by XcodeGen)
+ios/*.xcodeproj/
+xcuserdata/
+DerivedData/

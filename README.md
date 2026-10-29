@@ -1,104 +1,109 @@
-# AI Shortcut Keyboard (Android)
+<p align="center">
+  <img src="branding/banner.jpg" alt="Typosaurus — the AI keyboard that eats typos" width="100%">
+</p>
 
-A system keyboard (IME) that works in any app and adds one-tap AI writing actions (Fix, Rephrase, Detail,
-Shorten, Tone, Translate, Reply, Ask), inline triggers (`text /fix␣`), custom shortcuts, and bring-your-own-key
-support for OpenAI, Anthropic, Groq, OpenRouter, Ollama Cloud and any OpenAI-compatible endpoint.
+<p align="center">
+  <img src="branding/icon.png" alt="Typosaurus icon" width="96"><br>
+  <b>Typosaurus</b> — an AI keyboard for Android (and iOS) that fixes, rewrites, translates and replies in any app.<br>
+  Bring your own key: <b>OpenAI · Anthropic · Groq · OpenRouter · Ollama Cloud</b> or any OpenAI-compatible endpoint.
+</p>
 
-Package/product names are placeholders (`com.example.aikeyboard`). Replace before release.
+---
 
-## Build
+## What it does
+
+| | |
+|---|---|
+| ✨ **One-tap AI** | Fix, Rephrase, Detail, Shorten, Tone, Translate, Reply, Ask — on the selection or the whole field |
+| ⚡ **Inline triggers** | Type `pls send report tmrw /fix␣` or `good morning /tr:ta␣` and the text is rewritten in place |
+| 🧩 **Your own shortcuts** | Custom prompts with their own emoji, keyword, provider, model and temperature; import/export as JSON |
+| 👀 **Preview first** | Results stream into a preview: Accept, Retry, Copy or Cancel, then a 5-second Undo |
+| 😊 **Emoji, 📋 clipboard, 🎤 voice** | Emoji panel, in-memory clipboard history (API keys and passwords are masked, never kept), voice typing |
+| 🔒 **Private by design** | Text leaves the phone only when you tap an action, straight to *your* provider over HTTPS. Never from password, PIN or incognito fields, or apps you block. No Typosaurus server, no logs |
+| 🪶 **Small and fast** | 3.3 MB release APK, opens in ~0.4 s; Inter typeface bundled as a 100 KB variable font |
+
+## Install (Android)
 
 Requires JDK 17+ and the Android SDK (compileSdk 35).
 
 ```bash
-./gradlew :core:test                      # pure-Kotlin logic, no Android SDK needed with -PcoreOnly=true
-./gradlew lintDebug :data:testDebugUnitTest :app:testDebugUnitTest assembleDebug
+./gradlew assembleRelease          # app/build/outputs/apk/release/app-release.apk (~3.3 MB)
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+Open **Typosaurus**: setup walks through enabling the keyboard, selecting it, the privacy notice and adding a key.
+Without the Play upload key, local release builds are signed with the debug key — fine for testing, never upload them.
+
+From the command line instead:
+
+```bash
+adb shell ime enable com.example.aikeyboard/.ime.AiKeyboardService
+adb shell ime set    com.example.aikeyboard/.ime.AiKeyboardService
+```
+
+## iOS
+
+The shared Kotlin core (prompts, provider adapters, retries, triggers) is compiled into a `TyposaurusCore`
+framework and used by a SwiftUI app and keyboard extension in [`ios/`](ios). Building needs a Mac with Xcode 16+:
+
+```bash
+brew install xcodegen
+cd ios && xcodegen && open Typosaurus.xcodeproj
+```
+
+Set your team under *Signing*, run the **Typosaurus** scheme, then on the iPhone: *Settings › General › Keyboard ›
+Keyboards › Add New Keyboard › Typosaurus* and turn on **Allow Full Access** (needed to reach the AI provider).
+The app stores keys in a shared Keychain group and settings in an App Group, in the same JSON format as Android.
+
+iOS keyboards can't use the microphone or read other apps' text beyond the current field, so voice typing and
+clipboard history are Android-only; iOS has the toolbar, all AI shortcuts, inline triggers, preview, Accept and Undo.
+
+## How it works
+
+```
+any app's text field ──InputConnection──▶ Typosaurus keyboard (Compose)
+                                              │  tap ✨ / type "/fix␣"
+                                              ▼
+                          ActionRunner (shared Kotlin core)
+                 prompt templates · trigger parser · retry + fallback
+                                              │ HTTPS, your key
+                        OpenAI-compatible ◀───┴───▶ Anthropic Messages
+```
+
+| Module | What | Platforms |
+|---|---|---|
+| `:core` | Providers (OpenAI-compatible + Anthropic, SSE streaming, retry/fallback), prompt rendering, trigger parser, `ActionRunner` state machine, local metrics, `Assistant` facade for iOS | Kotlin Multiplatform: JVM/Android (OkHttp) and iOS (NSURLSession via Ktor Darwin) |
+| `:data` | DataStore settings, Android Keystore-encrypted API keys, 24 h model cache, local usage metrics | Android |
+| `:app` | Keyboard service, Compose keyboard (toolbar, emoji, clipboard, voice, preview), settings app, `PROCESS_TEXT` "Typosaurus Fix" menu | Android |
+| `ios/` | SwiftUI setup app + keyboard extension using `TyposaurusCore` | iOS 16+ |
+
+## Development
+
+```bash
+./gradlew -PcoreOnly=true :core:jvmTest   # shared core only — no Android SDK needed
+./gradlew lintDebug :core:jvmTest :data:testDebugUnitTest :app:testDebugUnitTest assembleDebug
 ./gradlew connectedDebugAndroidTest       # emulator/device: IME registration smoke test
 ```
 
-Core only, without the Android SDK or Google Maven access:
+CI (GitHub Actions) runs lint and all unit tests, a dependency vulnerability scan, an emulator test, and a macOS job
+that compiles the shared core for iOS and builds the app and keyboard extension for the simulator.
 
-```bash
-./gradlew -PcoreOnly=true :core:test
-```
+### Design decisions
 
-Enable it on a device/emulator (the debug build id has a `.debug` suffix):
+- **Prompt-injection hardening:** user text is wrapped in `<text>…</text>` and prompts say to treat it as data.
+- **Retries never happen after text has streamed** (no duplicated output): one retry (429 honours `Retry-After` up to 5 s, 5xx after 1 s), then the optional fallback provider.
+- **Auto-apply falls back to preview** when a result is over 2× the input or was cut off by the token limit.
+- **Per-model parameters:** Claude models never get `temperature`; OpenAI reasoning models (`o*`, `gpt-5`, `gpt-6`) get `max_completion_tokens` and no temperature. Override per model in *Settings › Providers › Advanced*.
+- **Inline triggers** only fire when the token starts the text or follows whitespace, so `example.com/fix ` is safe.
+- Plain `http://` is allowed only for `localhost`, `127.0.0.1` and `10.0.2.2` (local Ollama).
 
-```bash
-adb shell ime enable com.example.aikeyboard.debug/com.example.aikeyboard.ime.AiKeyboardService
-adb shell ime set    com.example.aikeyboard.debug/com.example.aikeyboard.ime.AiKeyboardService
-```
+## Before publishing
 
-Or just open the app: onboarding walks through enable, select, consent, key, try-it.
-
-## Layout
-
-| Module | What | Android? |
-|---|---|---|
-| `:core` | Providers (OpenAI-compatible + Anthropic, SSE, retry/fallback), prompt rendering, trigger parser, **`ActionRunner` state machine**, settings model, action import/export | No (pure Kotlin, 72 unit tests) |
-| `:data` | DataStore repositories, Keystore `KeyCipher`, 24 h model cache, local metrics store, device state | Yes |
-| `:app` | IME service, Compose keyboard (letters/symbols, shift, accents, backspace repeat, toolbar, preview), settings app (8 screens), `PROCESS_TEXT` activity | Yes |
-
-The runner, retry/fallback and trigger logic live in `:core` behind small ports (`TextPort`, `ClipboardPort`,
-`SettingsSource`) so they are tested on the JVM; `:app` only supplies the `InputConnection`/clipboard/DataStore adapters.
-
-## What is implemented (vs. the spec)
-
-All of sections 2, 5–15 of the spec: 8 built-in actions; toolbar + inline triggers (configurable prefix); custom
-actions with provider/model/temperature/max-tokens/auto-apply/toolbar toggle, reorder, JSON import/export;
-streaming preview with Accept / Retry / Copy / Cancel and a 5 s Undo; selection → whole-field → before-cursor capture
-with mismatch detection; AI disabled in password/PIN/non-text/incognito fields, per-app blocklist (+ starter list),
-and before first unlock; clipboard read only on tap; Keystore-encrypted keys; model lists fetched (never
-hardcoded) and cached 24 h; Ollama `/api/tags` fallback; offline indicator; per-model parameter quirks
-(`max_completion_tokens`, omit temperature); non-streaming mode; keyboard theme/accent/height/haptics/sound/number row; local-only usage metrics (§16.5) —
-time to first token and total latency per provider/model, error kind/HTTP code counts, replace success and undo rate
-per action, keyboard cold start — shown in Settings › Diagnostics, with an off switch and "Clear stats". Events carry
-ids and timings only (§14); no text, prompts, results or keys.
-
-### Deliberate changes from the draft spec
-
-These fix problems found while reviewing the draft's code samples:
-
-- **Prompt-injection hardening:** user text is wrapped in `<text>…</text>` and system prompts say to treat it as data.
-- **Single-pass template substitution:** text containing `{arg}`/`{tone}` can no longer be rewritten.
-- **Safer output cleaning:** only strips known preambles/wrapper tags/quotes the user didn't type themselves.
-- **No `callTimeout` on streams** (it would cut long generations); total 60 s limit enforced by the runner.
-- **API keys resolved on IO inside the request flow**, not on the main thread.
-- **Consent gate:** nothing is sent until the privacy notice is accepted in onboarding.
-- **Config errors are a distinct kind** (missing key/model/base URL) with an "Open settings" button instead of a retry.
-- **Inline-trigger regex** requires the token to start the text or follow whitespace (`example.com/fix ` never fires).
-- **Retries never happen after text has streamed**, so output is not duplicated; one retry (429 honours
-  `Retry-After` up to 5 s, 5xx after 1 s), then the optional fallback provider.
-- **Auto-apply is downgraded to preview** when the result is >2× the input or was cut off by the token limit.
-- Plain `http://` is allowed only for `localhost`, `127.0.0.1`, `10.0.2.2` (network security config + `BaseUrlPolicy`).
-
-### Not implemented (spec backlog / out of scope)
-
-Word suggestions, swipe typing, voice, multilingual layouts, clipboard manager, emoji/GIF, on-device model, hosted mode.
-
-## Verification status — read this
-
-| Area | Status |
-|---|---|
-| `:core` (providers vs. MockWebServer, SSE for both adapters, error mapping, timeouts, retry/fallback, runner state machine, parser, prompts, codec) | **72 tests pass** (JVM) |
-| `TextController` against a simulated host field, `FieldPolicy` | **17 tests pass** against real Android 14 framework classes (`android-all`); the same tests ship in `:app/src/test` |
-| `:data` and `:app` Kotlin sources | **Type-checked** (compiled) against Compose Multiplatform 1.7.3 plus hand-written shims for AndroidX lifecycle/navigation/DataStore/activity. This catches typos and signature mismatches between modules but is **not** a real Android build |
-| Manifest/resource references | Statically checked (XML well-formed, all `@xml/@style/@string` references resolve) |
-| AGP/Gradle build, lint, `:data`/`:app` unit tests, debug APK | **Pass** (`lintDebug :data:testDebugUnitTest :app:testDebugUnitTest assembleDebug`) |
-| R8 release build, Compose-on-IME runtime behaviour, real DataStore/Keystore, instrumented test | **Not run** — needs a device/emulator |
-
-So before shipping: run the Gradle build above, then walk the manual matrix (spec §16.4) on a Pixel and a Samsung
-device. Things most likely to need adjustment on first real run:
-
-1. Compose-in-IME lifecycle wiring (`AiKeyboardService`) and `Modifier.windowInsetsPadding(navigationBars)` on Android 15 edge-to-edge.
-2. The hand-rolled key gesture handling (`KeyCap`) — tune long-press/repeat feel.
-3. Host-app quirks in the compatibility table (WebViews, Teams/Outlook).
-4. Provider URLs/headers and which models accept which parameters — re-verify against current provider docs.
-
-## Release checklist
-
-- Replace `com.example.*`, `privacy_policy_url`, app name, add real launcher artwork.
-- Add `UPLOAD_KEYSTORE*` secrets (see `.github/workflows/ci.yml`); enrol in Play App Signing.
-- Publish a privacy policy; complete the Data Safety form (text is sent to user-chosen AI providers, not collected by you in BYOK mode — verify the wording against the current form) and Play's IME/User Data policy review.
+- Replace the placeholder package `com.example.*`, the bundle ids in `ios/project.yml`, and `privacy_policy_url`.
+- Publish a privacy policy; complete Play's Data Safety form and IME/User Data review, and App Store privacy details.
+- Add the Play upload-key secrets and set the repo variable `PLAY_RELEASE=true` to enable the signed release job.
 - Get a security/privacy review before distributing to an organisation: a keyboard can see everything typed.
-- Staged rollout: internal → closed beta (20–50 users) → 10 % → 100 %.
+
+## Credits
+
+Typeface: [Inter](https://rsms.me/inter/) by Rasmus Andersson, SIL Open Font License ([branding/Inter-OFL.txt](branding/Inter-OFL.txt)).
