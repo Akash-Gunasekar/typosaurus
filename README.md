@@ -98,14 +98,14 @@ clipboard history are Android-only; iOS has the toolbar, all AI shortcuts, inlin
 ## How it works
 
 ```mermaid
-flowchart LR
-    app(["📱 Any app<br/>text field"])
+flowchart TB
+    app(["📱 Any app · text field"])
     kb["⌨️ Typosaurus keyboard<br/>Android · Compose<br/>iOS · SwiftUI"]
-    runner{{"🧠 ActionRunner<br/>shared Kotlin core"}}
     prompts[/"📝 Prompt templates<br/>+ your shortcuts"/]
     trig[/"⚡ Trigger parser<br/>text /fix␣"/]
     keys[("🔐 Your API key<br/>Keystore · Keychain")]
-    route{"Provider<br/>router"}
+    runner{{"🧠 ActionRunner<br/>shared Kotlin core"}}
+    route{"Provider router"}
     oa[["OpenAI · Groq<br/>OpenRouter · Ollama"]]
     an[["Anthropic<br/>Claude"]]
 
@@ -117,8 +117,8 @@ flowchart LR
     runner -- "HTTPS · retry · fallback" --> route
     route --> oa
     route --> an
-    oa -- "streamed result" --> kb
-    an -- "streamed result" --> kb
+    oa -. "streamed result" .-> kb
+    an -. "streamed result" .-> kb
     kb -- "Accept · Undo" --> app
 
     classDef ink fill:#2C3E50,stroke:#4A90E2,color:#F5F7FA,stroke-width:2px
