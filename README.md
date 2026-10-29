@@ -20,12 +20,7 @@
 
 ## See it in action
 
-<!-- Replace the poster link below with the uploaded video URL on its own line,
-     e.g. https://github.com/user-attachments/assets/<id>, to get an inline player. -->
-<p align="center">
-  <a href="promo/typosaurus-promo-720.mp4"><img src="promo/poster.jpg" alt="Watch the 30-second Typosaurus demo" width="720"></a><br>
-  <sub>▶ 30-second demo with voice-over</sub>
-</p>
+https://github.com/user-attachments/assets/71680184-58f6-41c0-93cf-9ed8924164b7
 
 ## Screenshots
 
