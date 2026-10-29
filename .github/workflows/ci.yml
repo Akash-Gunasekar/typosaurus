@@ -14,9 +14,12 @@ jobs:
       - name: Lint, unit tests (core, data, app), debug build
         run: ./gradlew lintDebug :core:jvmTest :data:testDebugUnitTest :app:testDebugUnitTest assembleDebug
       - name: Lock the release dependency graph for the scan
-        run: ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --write-locks -q
+        run: |
+          ./gradlew :app:dependencies --configuration releaseRuntimeClasspath --write-locks -q
+          test -s app/gradle.lockfile && wc -l app/gradle.lockfile
       - name: Dependency vulnerability scan (OSV)
-        run: docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:latest scan source --recursive /src
+        # Point the scanner at the lockfile explicitly; directory discovery found "no package sources".
+        run: docker run --rm -v "$PWD:/src" ghcr.io/google/osv-scanner:latest scan source --lockfile /src/app/gradle.lockfile
 
   ios:
     # Compiles the shared Kotlin core for iOS and builds the SwiftUI app + keyboard for the simulator.
