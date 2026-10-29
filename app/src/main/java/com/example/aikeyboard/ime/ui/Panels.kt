@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
@@ -154,8 +155,8 @@ fun AiMenuPanel(height: Dp, actions: List<Action>, enabled: Boolean, onAction: (
     Column(Modifier.fillMaxWidth().height(height)) {
         LazyVerticalGrid(GridCells.Fixed(4), Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(6.dp),
             horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            items(actions, key = { it.id }) { a ->
-                Tile(a.icon, a.name, enabled) { onAction(a) }
+            itemsIndexed(actions, key = { _, a -> a.id }) { i, a ->
+                Tile(a.icon, a.name, enabled, Modifier.popIn(i, stepMs = 30, from = 0.6f)) { onAction(a) }
             }
         }
         if (!enabled) Text("AI is off in this field", Modifier.padding(horizontal = 12.dp), fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f))
@@ -164,9 +165,9 @@ fun AiMenuPanel(height: Dp, actions: List<Action>, enabled: Boolean, onAction: (
 }
 
 @Composable
-private fun Tile(icon: String, label: String, enabled: Boolean, onClick: () -> Unit) {
+private fun Tile(icon: String, label: String, enabled: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
-        Modifier.clip(RoundedCornerShape(12.dp))
+        modifier.clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.primary.copy(alpha = if (enabled) 0.14f else 0.05f))
             .clickable(enabled = enabled, onClick = onClick).padding(vertical = 10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,

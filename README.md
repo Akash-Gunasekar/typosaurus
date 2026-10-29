@@ -151,12 +151,9 @@ that compiles the shared core for iOS and builds the app and keyboard extension 
 - **Inline triggers** only fire when the token starts the text or follows whitespace, so `example.com/fix ` is safe.
 - Plain `http://` is allowed only for `localhost`, `127.0.0.1` and `10.0.2.2` (local Ollama).
 
-## Before publishing
+## License
 
-- Replace the placeholder package `com.example.*`, the bundle ids in `ios/project.yml`, and `privacy_policy_url`.
-- Publish a privacy policy; complete Play's Data Safety form and IME/User Data review, and App Store privacy details.
-- Add the Play upload-key secrets and set the repo variable `PLAY_RELEASE=true` to enable the signed release job.
-- Get a security/privacy review before distributing to an organisation: a keyboard can see everything typed.
+[MIT](LICENSE) © 2026 Akash Gunasekar. The bundled Inter typeface is under the [SIL Open Font License](branding/Inter-OFL.txt).
 
 ---
 

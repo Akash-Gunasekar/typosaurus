@@ -40,6 +40,8 @@ class SettingsRepository(context: Context, scope: CoroutineScope) : SettingsSour
 
     override val settings: StateFlow<AppSettings> = _settings
     override val actions: StateFlow<List<Action>> = _actions
+    /** True once persisted settings have been read (UI waits for it before choosing a start screen). */
+    val isLoaded: StateFlow<Boolean> = loaded
 
     init {
         scope.launch {

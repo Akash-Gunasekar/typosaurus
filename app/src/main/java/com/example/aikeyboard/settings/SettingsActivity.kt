@@ -4,6 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import android.graphics.Color
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.unit.IntOffset
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -55,13 +63,27 @@ class SettingsActivity : ComponentActivity() {
             }
             AppTheme(cfg) {
                 Surface(color = MaterialTheme.colorScheme.background) {
-                    val nav = rememberNavController()
-                    val start = when {
-                        startRoute != null -> "home"
-                        !cfg.onboardingDone -> "onboarding"
-                        else -> "home"
+                    // Choose the start screen once, after settings have loaded. Recomputing it from live settings
+                    // swapped the graph mid-session and left Home on the back stack twice.
+                    val loaded by vm.settingsLoaded.collectAsState()
+                    if (!loaded) return@Surface
+                    val start = rememberSaveable {
+                        when {
+                            startRoute != null -> "home"
+                            !cfg.onboardingDone -> "onboarding"
+                            else -> "home"
+                        }
                     }
-                    NavHost(nav, startDestination = start) {
+                    val nav = rememberNavController()
+                    NavHost(
+                        nav, startDestination = start,
+                        // App navigation like the promo: the new screen slides in from the right while the old one
+                        // drifts a little to the left; back reverses it.
+                        enterTransition = { slideInHorizontally(NavMotion) { it } + fadeIn(NavFade) },
+                        exitTransition = { slideOutHorizontally(NavMotion) { -it / 4 } + fadeOut(NavFade) },
+                        popEnterTransition = { slideInHorizontally(NavMotion) { -it / 4 } + fadeIn(NavFade) },
+                        popExitTransition = { slideOutHorizontally(NavMotion) { it } + fadeOut(NavFade) },
+                    ) {
                         composable("home") { HomeScreen(vm, nav) }
                         composable("onboarding") { OnboardingScreen(vm, nav) }
                         composable("providers") { ProvidersScreen(vm, nav) }
@@ -90,6 +112,9 @@ class SettingsActivity : ComponentActivity() {
     }
 
     companion object {
+        private val NavMotion = tween<IntOffset>(420, easing = FastOutSlowInEasing)
+        private val NavFade = tween<Float>(300)
+
         const val EXTRA_ROUTE = "route"
         /** Sent by the keyboard's mic button: ask for the microphone permission on arrival. */
         const val EXTRA_REQUEST_MIC = "request_mic"

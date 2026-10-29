@@ -20,6 +20,7 @@ class SettingsViewModel(app: Application) : AndroidViewModel(app) {
 
     val settings: StateFlow<AppSettings> = g.settings.settings
     val actions: StateFlow<List<Action>> = g.settings.actions
+    val settingsLoaded: StateFlow<Boolean> = g.settings.isLoaded
     val configuredKeys: StateFlow<Set<String>> =
         g.keys.configured.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 

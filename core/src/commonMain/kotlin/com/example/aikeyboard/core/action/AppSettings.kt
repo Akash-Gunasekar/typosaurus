@@ -34,6 +34,8 @@ data class AppSettings(
     val keyboardAccent: Long = NEON_TEAL,
     val haptics: Boolean = true,
     val keySound: Boolean = false,
+    /** Letter pop-up above the key while it is pressed. */
+    val keyPopup: Boolean = true,
     val numberRow: Boolean = true,
     val heightPercent: Int = 100,
     val longPressDelayMs: Int = 350,

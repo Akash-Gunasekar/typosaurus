@@ -119,6 +119,7 @@ fun KeyboardPrefsScreen(vm: SettingsViewModel, nav: NavController) {
         SwitchRow("Number row", null, cfg.numberRow) { v -> vm.update { it.copy(numberRow = v) } }
         SwitchRow("Haptic feedback", null, cfg.haptics) { v -> vm.update { it.copy(haptics = v) } }
         SwitchRow("Key sound", null, cfg.keySound) { v -> vm.update { it.copy(keySound = v) } }
+        SwitchRow("Key pop-up", "Show the letter above your finger while typing", cfg.keyPopup) { v -> vm.update { it.copy(keyPopup = v) } }
         Text("Key height: ${cfg.heightPercent}%")
         Slider(cfg.heightPercent.toFloat(), { v -> vm.update { it.copy(heightPercent = v.toInt()) } }, valueRange = 80f..130f)
         Text("Long-press delay: ${cfg.longPressDelayMs} ms")
@@ -185,6 +186,7 @@ fun AboutScreen(nav: NavController) {
         Hint("A keyboard with one-tap AI writing shortcuts. Bring your own key.")
         TextButton(onClick = { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(ctx.getString(R.string.privacy_policy_url)))) }) { Text("Privacy policy") }
         HorizontalDivider()
+        Hint("Typosaurus is open source under the MIT License © 2026 Akash Gunasekar.")
         SectionTitle("Open-source licenses")
         listOf(
             "Kotlin, kotlinx.coroutines, kotlinx.serialization — Apache 2.0",

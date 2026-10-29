@@ -16,6 +16,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import com.example.aikeyboard.ime.ui.maskReveal
+import com.example.aikeyboard.ime.ui.popIn
+import com.example.aikeyboard.ime.ui.pressScale
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -77,20 +81,21 @@ fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
     ScreenScaffold("Typosaurus", nav, vm) {
         // ---- status header: the launch poster, dino in the corner -------------------------
         // The artwork is light, so the card keeps the poster's own colours in both themes.
-        Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(24.dp)).background(PosterBackground)) {
+        Box(Modifier.fillMaxWidth().popIn(0, from = 0.94f).clip(RoundedCornerShape(24.dp)).background(PosterBackground)) {
             // The dino sits in the bottom-right corner; text keeps the left side.
             Image(
                 painterResource(R.drawable.header_dino), null,
-                Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.48f), contentScale = ContentScale.Fit,
+                Modifier.align(Alignment.BottomEnd).fillMaxWidth(0.48f).popIn(4, stepMs = 60, from = 0.6f, lift = 24.dp),
+                contentScale = ContentScale.Fit,
             )
             Column(Modifier.fillMaxWidth().padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 // Headline and subtitle span the card, one line each.
                 Text(
-                    if (ready) "You're all set" else "Finish setting up", color = PosterInk,
+                    if (ready) "You're all set" else "Finish setting up", Modifier.maskReveal(80), color = PosterInk,
                     style = MaterialTheme.typography.headlineSmall, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    if (ready) "Tap ✨ on the keyboard in any app" else "A few steps left before AI works", color = PosterMuted,
+                    if (ready) "Tap ✨ on the keyboard in any app" else "A few steps left before AI works", Modifier.maskReveal(180), color = PosterMuted,
                     style = MaterialTheme.typography.bodyMedium, maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
                 )
                 // Chips and the button stay on the left, clear of the dino in the corner.
@@ -121,15 +126,17 @@ fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
             HomeTile("Diagnostics", "Speed and errors", Icons.Outlined.Insights, "diagnostics"),
             HomeTile("About", "Version and licenses", Icons.Outlined.Info, "about"),
         )
-        tiles.chunked(2).forEach { pair ->
+        tiles.chunked(2).forEachIndexed { row, pair ->
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                pair.forEach { t -> TileCard(t, Modifier.weight(1f)) { nav.navigate(t.route) } }
+                pair.forEachIndexed { col, t ->
+                    TileCard(t, Modifier.weight(1f).popIn(2 + row * 2 + col, stepMs = 40, from = 0.9f, lift = 16.dp)) { nav.navigate(t.route) }
+                }
                 if (pair.size == 1) Spacer(Modifier.weight(1f))
             }
         }
 
         // ---- try it ------------------------------------------------------------------------
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp)) {
+        Card(Modifier.fillMaxWidth().popIn(11, stepMs = 40, from = 0.94f, lift = 16.dp), shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("Try it", style = MaterialTheme.typography.titleMedium)
                 Hint("Type here with Typosaurus selected, then tap ✨.")
@@ -145,7 +152,8 @@ private class HomeTile(val title: String, val subtitle: String, val icon: ImageV
 
 @Composable
 private fun TileCard(t: HomeTile, modifier: Modifier, onClick: () -> Unit) {
-    Card(onClick = onClick, modifier = modifier, shape = RoundedCornerShape(20.dp)) {
+    val interaction = remember { MutableInteractionSource() }
+    Card(onClick = onClick, modifier = modifier.pressScale(interaction), shape = RoundedCornerShape(20.dp), interactionSource = interaction) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             // Icon and name on one line, description underneath.
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -220,7 +228,13 @@ fun OnboardingScreen(vm: SettingsViewModel, nav: NavController) {
             OutlinedTextField(sample, { sample = it }, Modifier.fillMaxWidth(), label = { Text("Type “teh cat sat” then tap ✨ Fix") })
         }
         Button(
-            onClick = { vm.update { it.copy(onboardingDone = true) }; nav.navigate("home") { popUpTo(0) } },
+            onClick = {
+                vm.update { it.copy(onboardingDone = true) }
+                // Back to the Home that opened Setup, or replace Setup with Home on first run: never two Homes.
+                if (!nav.popBackStack("home", inclusive = false)) {
+                    nav.navigate("home") { popUpTo("onboarding") { inclusive = true } }
+                }
+            },
             enabled = cfg.consentGiven,
         ) { Text("Done") }
     }
@@ -228,7 +242,7 @@ fun OnboardingScreen(vm: SettingsViewModel, nav: NavController) {
 
 @Composable
 private fun Step(n: Int, title: String, done: Boolean, content: @Composable () -> Unit) {
-    Card(Modifier.fillMaxWidth()) {
+    Card(Modifier.fillMaxWidth().popIn(n, stepMs = 60, from = 0.94f, lift = 20.dp)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text("${if (done) "✓" else "$n."} $title", style = MaterialTheme.typography.titleMedium)
             content()
