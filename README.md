@@ -10,6 +10,21 @@
 
 ---
 
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/keyboard.png" width="180" alt="Keyboard with the AI toolbar"><br><sub>Keyboard with one-tap AI buttons</sub></td>
+    <td align="center"><img src="docs/screenshots/menu.png" width="180" alt="All AI shortcuts"><br><sub>⋯ every shortcut</sub></td>
+    <td align="center"><img src="docs/screenshots/emoji.png" width="180" alt="Emoji panel"><br><sub>Emoji panel</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/home.png" width="180" alt="Home screen"><br><sub>Home</sub></td>
+    <td align="center"><img src="docs/screenshots/setup.png" width="180" alt="Setup and privacy notice"><br><sub>Setup and privacy notice</sub></td>
+    <td></td>
+  </tr>
+</table>
+
 ## What it does
 
 | | |
