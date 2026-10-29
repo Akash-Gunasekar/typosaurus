@@ -57,6 +57,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
@@ -242,10 +243,10 @@ private fun KeyRows(
             }
         }
         val rows = when (layer) { Layer.Letters -> Layouts.letters; Layer.Symbols1 -> Layouts.symbols1; Layer.Symbols2 -> Layouts.symbols2 }
-        KeyRow(sidePadding = if (layer == Layer.Letters) 0.5f else 0f) {
+        KeyRow { // q…p spans the full width, like the number row
             rows[0].forEach { k -> LetterKey(k, upper, keyArgs, onChar, onAccents) }
         }
-        KeyRow(sidePadding = if (layer == Layer.Letters) 0.5f else 0f) {
+        KeyRow(sidePadding = if (layer == Layer.Letters) 0.5f else 0f) { // a…l: the usual half-key inset
             rows[1].forEach { k -> LetterKey(k, upper, keyArgs, onChar, onAccents) }
         }
         KeyRow {
@@ -448,6 +449,7 @@ private fun RowScope.KeyCap(
         Modifier
             .weight(weight)
             .height(args.height)
+            .shadow(1.dp, RoundedCornerShape(8.dp))
             .clip(RoundedCornerShape(8.dp))
             .background(bg)
             .pointerInput(repeat, hasLong, args.longPressMs) {

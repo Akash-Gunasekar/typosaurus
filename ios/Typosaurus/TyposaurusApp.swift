@@ -5,14 +5,14 @@ struct TyposaurusApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .preferredColorScheme(.dark)
-                .tint(Brand.lime)
         }
     }
 }
 
 /// Setup and settings: enable the keyboard, accept the privacy notice, add a key, try it.
 struct ContentView: View {
+    @Environment(\.colorScheme) private var scheme
+    private var p: Palette { .of(scheme) }
     @State private var settings = SharedStore.settings
     @State private var keyDraft = ""
     @State private var hasKey = false
@@ -32,14 +32,14 @@ struct ContentView: View {
                     header
                     card("1. Turn on the keyboard") {
                         Text("Settings › General › Keyboard › Keyboards › Add New Keyboard › Typosaurus, then tap it and turn on **Allow Full Access** so it can reach your AI provider.")
-                            .font(.inter(14)).foregroundColor(Brand.muted)
+                            .font(.inter(14)).foregroundColor(p.muted)
                         Button("Open Settings") {
                             if let url = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(url) }
-                        }.buttonStyle(LimeButtonStyle())
+                        }.buttonStyle(AccentButtonStyle(color: p.accent, textColor: p.onAccent))
                     }
                     card("2. Privacy notice") {
                         Text("Text is sent only when you tap an AI action or finish an inline shortcut, straight from your phone to the provider you choose over HTTPS. There is no Typosaurus server, and nothing is logged.")
-                            .font(.inter(14)).foregroundColor(Brand.muted)
+                            .font(.inter(14)).foregroundColor(p.muted)
                         Toggle("I understand and agree", isOn: $settings.consentGiven).font(.inter(15, .medium))
                     }
                     card("3. AI provider") {
@@ -48,15 +48,15 @@ struct ContentView: View {
                         }.pickerStyle(.menu)
                         SecureField(hasKey ? "Key saved — paste to replace" : "Paste your API key", text: $keyDraft)
                             .textContentType(.password).font(.inter(15))
-                            .padding(12).background(Brand.surfaceHigh).clipShape(RoundedRectangle(cornerRadius: 12))
+                            .padding(12).background(p.panel).clipShape(RoundedRectangle(cornerRadius: 12))
                         TextField("Model id (e.g. claude-sonnet-5)", text: model)
                             .autocorrectionDisabled().textInputAutocapitalization(.never).font(.inter(15))
-                            .padding(12).background(Brand.surfaceHigh).clipShape(RoundedRectangle(cornerRadius: 12))
+                            .padding(12).background(p.panel).clipShape(RoundedRectangle(cornerRadius: 12))
                         HStack {
                             Button("Save key") {
                                 SharedStore.setApiKey(keyDraft, for: settings.defaultProviderId)
                                 keyDraft = ""; refreshKey()
-                            }.buttonStyle(LimeButtonStyle()).disabled(keyDraft.isEmpty)
+                            }.buttonStyle(AccentButtonStyle(color: p.accent, textColor: p.onAccent)).disabled(keyDraft.isEmpty)
                             if hasKey {
                                 Button("Delete key", role: .destructive) {
                                     SharedStore.setApiKey(nil, for: settings.defaultProviderId); refreshKey()
@@ -66,16 +66,17 @@ struct ContentView: View {
                     }
                     card("4. Try it") {
                         Text("Switch to Typosaurus with 🌐, type “teh cat sat”, then tap ✨.")
-                            .font(.inter(14)).foregroundColor(Brand.muted)
+                            .font(.inter(14)).foregroundColor(p.muted)
                         TextField("Type here", text: $sample, axis: .vertical).lineLimit(3...6).font(.inter(16))
-                            .padding(12).background(Brand.surfaceHigh).clipShape(RoundedRectangle(cornerRadius: 12))
+                            .padding(12).background(p.panel).clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }
                 .padding(16)
             }
-            .background(Brand.ink.ignoresSafeArea())
+            .background(p.background.ignoresSafeArea())
             .navigationTitle("Typosaurus")
         }
+        .tint(p.accent)
         .onChange(of: settings) { SharedStore.settings = $0; refreshKey() }
         .onAppear(perform: refreshKey)
     }
@@ -84,24 +85,24 @@ struct ContentView: View {
         HStack(spacing: 14) {
             Image("Dino").resizable().frame(width: 56, height: 56).clipShape(Circle())
             VStack(alignment: .leading, spacing: 2) {
-                Text("Typosaurus").font(.inter(26, .heavy)).foregroundColor(Brand.ink)
-                Text("THE AI KEYBOARD THAT EATS TYPOS").font(.inter(10, .semibold)).kerning(1.6).foregroundColor(Brand.ink.opacity(0.75))
+                Text("Typosaurus").font(.inter(26, .heavy)).foregroundColor(p.onAccent)
+                Text("THE AI KEYBOARD THAT EATS TYPOS").font(.inter(10, .semibold)).kerning(1.6).foregroundColor(p.onAccent.opacity(0.8))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(18)
-        .background(LinearGradient(colors: [Brand.lime, Brand.lime.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
+        .background(LinearGradient(colors: [p.accent, p.accent.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
         .clipShape(RoundedRectangle(cornerRadius: 24))
     }
 
     private func card<C: View>(_ title: String, @ViewBuilder _ content: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title).font(.inter(18, .bold)).foregroundColor(Brand.text)
+            Text(title).font(.inter(18, .bold)).foregroundColor(p.text)
             content()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Brand.surface)
+        .background(p.surface)
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 

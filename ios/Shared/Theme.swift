@@ -1,31 +1,45 @@
 import SwiftUI
 
-/// Typosaurus brand palette and type, matching the Android app.
-enum Brand {
-    static let lime = Color(red: 0xC6 / 255, green: 1, blue: 0x3D / 255)
-    static let ink = Color(red: 0x05 / 255, green: 0x05 / 255, blue: 0x05 / 255)
-    static let surface = Color(red: 0x12 / 255, green: 0x15 / 255, blue: 0x11 / 255)
-    static let surfaceHigh = Color(red: 0x1D / 255, green: 0x23 / 255, blue: 0x1B / 255)
-    static let dinoGreen = Color(red: 0x2F / 255, green: 0x4A / 255, blue: 0x22 / 255)
-    static let text = Color(red: 0xF2 / 255, green: 0xF5 / 255, blue: 0xEE / 255)
-    static let muted = Color(red: 0xB9 / 255, green: 0xC2 / 255, blue: 0xB1 / 255)
+private func rgb(_ hex: UInt32) -> Color {
+    Color(red: Double((hex >> 16) & 0xFF) / 255, green: Double((hex >> 8) & 0xFF) / 255, blue: Double(hex & 0xFF) / 255)
 }
 
+/// Typosaurus palette, shared by the app and the keyboard, matching Android. Follows the phone's appearance.
+/// Light "minimalist": off-white base, white keys, slate-blue action, deep-charcoal text.
+/// Dark "stealth": charcoal base, dark-slate keys, neon-teal action, off-white text.
+struct Palette {
+    let background, surface, key, panel, text, muted, accent, onAccent: Color
+
+    static func of(_ scheme: ColorScheme) -> Palette {
+        scheme == .dark
+            ? Palette(background: rgb(0x121212), surface: rgb(0x1E1E1E), key: rgb(0x2A2E33), panel: rgb(0x1E1E1E),
+                      text: rgb(0xE0E0E0), muted: rgb(0xA8AFB8), accent: rgb(0x00E676), onAccent: rgb(0x121212))
+            : Palette(background: rgb(0xF5F7FA), surface: .white, key: .white, panel: rgb(0xE9EEF4),
+                      text: rgb(0x2C3E50), muted: rgb(0x5D6D7E), accent: rgb(0x4A90E2), onAccent: .white)
+    }
+}
+
+typealias KeyPalette = Palette
+
 extension Font {
-    /// Inter, the typeface of the Typosaurus wordmark (bundled variable font).
+    /// Inter, the typeface of the Typosaurus wordmark (bundled variable font; iOS picks the
+    /// Display optical size automatically for large text).
     static func inter(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         .custom("Inter", size: size).weight(weight)
     }
 }
 
-/// Lime pill button, as on the launch artwork.
-struct LimeButtonStyle: ButtonStyle {
+/// Filled pill button in the accent colour.
+struct AccentButtonStyle: ButtonStyle {
+    let color: Color
+    let textColor: Color
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.inter(16, .semibold))
-            .foregroundColor(Brand.ink)
+            .foregroundColor(textColor)
             .padding(.horizontal, 20).padding(.vertical, 12)
-            .background(Brand.lime.opacity(configuration.isPressed ? 0.75 : 1))
+            .background(color.opacity(configuration.isPressed ? 0.75 : 1))
             .clipShape(Capsule())
     }
 }

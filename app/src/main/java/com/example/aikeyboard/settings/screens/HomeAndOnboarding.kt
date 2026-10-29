@@ -83,8 +83,8 @@ fun HomeScreen(vm: SettingsViewModel, nav: NavController) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Image(
-                    painterResource(R.mipmap.ic_launcher_foreground), "Typosaurus",
-                    Modifier.size(52.dp).clip(CircleShape), contentScale = ContentScale.Crop,
+                    painterResource(R.drawable.dino_badge), "Typosaurus",
+                    Modifier.size(72.dp).clip(CircleShape), contentScale = ContentScale.Crop,
                 )
                 Spacer(Modifier.width(12.dp))
                 Column {

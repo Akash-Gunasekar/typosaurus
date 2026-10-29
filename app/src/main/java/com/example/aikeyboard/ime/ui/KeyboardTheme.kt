@@ -1,6 +1,7 @@
 package com.example.aikeyboard.ime.ui
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
@@ -17,75 +18,106 @@ import androidx.compose.ui.unit.em
 import com.example.aikeyboard.R
 import com.example.aikeyboard.core.action.AppSettings
 
-/** Typosaurus brand palette (from the launch artwork). */
-object Brand {
-    val Lime = Color(0xFFC6FF3D)
-    val Ink = Color(0xFF050505)
-    val DinoGreen = Color(0xFF2F4A22)
-    val Paper = Color(0xFFF6F8F2)
+/**
+ * Typosaurus palette, shared by the app and the keyboard.
+ * Light, "minimalist": off-white base, white keys with a soft shadow, slate-blue action, deep-charcoal text.
+ * Dark, "stealth": charcoal base, dark-slate keys, a vibrant accent (neon teal by default), off-white text.
+ */
+object Palette {
+    val LightBase = Color(0xFFF5F7FA)
+    val LightKey = Color(0xFFFFFFFF)
+    val SlateBlue = Color(0xFF4A90E2)
+    val Charcoal = Color(0xFF2C3E50)
+
+    val DarkBase = Color(0xFF121212)
+    val DarkSurface = Color(0xFF1E1E1E)
+    val DarkKey = Color(0xFF2A2E33)
+    val OffWhite = Color(0xFFE0E0E0)
 }
 
-/** Inter (variable weight axis, Latin subset) — the typeface of the Typosaurus wordmark. */
+/**
+ * Inter (variable: weight + optical size, Latin subset). The wordmark on the launch artwork is the
+ * Display cut (optical size 32): tighter and narrower than the text cut used for body copy and keys.
+ */
 @OptIn(androidx.compose.ui.text.ExperimentalTextApi::class)
-private val Inter = FontFamily(
+private fun inter(opticalSize: Float) = FontFamily(
     listOf(400, 500, 600, 700, 800).map { w ->
-        Font(R.font.inter, FontWeight(w), variationSettings = FontVariation.Settings(FontVariation.weight(w)))
+        Font(
+            R.font.inter, FontWeight(w),
+            variationSettings = FontVariation.Settings(FontVariation.weight(w), FontVariation.Setting("opsz", opticalSize)),
+        )
     },
 )
 
+private val InterText = inter(14f)
+private val InterDisplay = inter(32f)
+
 private val AppTypography: Typography = Typography().let { t ->
-    fun TextStyle.inter(weight: FontWeight? = null, tracking: Double? = null) =
-        copy(fontFamily = Inter, fontWeight = weight ?: fontWeight, letterSpacing = tracking?.em ?: letterSpacing)
+    fun TextStyle.text(weight: FontWeight? = null, tracking: Double? = null) =
+        copy(fontFamily = InterText, fontWeight = weight ?: fontWeight, letterSpacing = tracking?.em ?: letterSpacing)
+    // Headings use the wordmark's cut, weight and tight tracking.
+    fun TextStyle.display(weight: FontWeight, tracking: Double) =
+        copy(fontFamily = InterDisplay, fontWeight = weight, letterSpacing = tracking.em)
     Typography(
-        displayLarge = t.displayLarge.inter(FontWeight.ExtraBold, -0.03), displayMedium = t.displayMedium.inter(FontWeight.ExtraBold, -0.03),
-        displaySmall = t.displaySmall.inter(FontWeight.Bold, -0.02), headlineLarge = t.headlineLarge.inter(FontWeight.Bold, -0.02),
-        headlineMedium = t.headlineMedium.inter(FontWeight.Bold, -0.02), headlineSmall = t.headlineSmall.inter(FontWeight.Bold, -0.01),
-        titleLarge = t.titleLarge.inter(FontWeight.Bold, -0.01), titleMedium = t.titleMedium.inter(FontWeight.SemiBold),
-        titleSmall = t.titleSmall.inter(FontWeight.SemiBold), bodyLarge = t.bodyLarge.inter(), bodyMedium = t.bodyMedium.inter(),
-        bodySmall = t.bodySmall.inter(), labelLarge = t.labelLarge.inter(FontWeight.SemiBold), labelMedium = t.labelMedium.inter(FontWeight.Medium),
-        labelSmall = t.labelSmall.inter(FontWeight.Medium, 0.08),
+        displayLarge = t.displayLarge.display(FontWeight.ExtraBold, -0.035), displayMedium = t.displayMedium.display(FontWeight.ExtraBold, -0.03),
+        displaySmall = t.displaySmall.display(FontWeight.Bold, -0.03), headlineLarge = t.headlineLarge.display(FontWeight.Bold, -0.03),
+        headlineMedium = t.headlineMedium.display(FontWeight.Bold, -0.025), headlineSmall = t.headlineSmall.display(FontWeight.Bold, -0.02),
+        titleLarge = t.titleLarge.display(FontWeight.Bold, -0.02), titleMedium = t.titleMedium.display(FontWeight.SemiBold, -0.01),
+        titleSmall = t.titleSmall.display(FontWeight.SemiBold, -0.005), bodyLarge = t.bodyLarge.text(), bodyMedium = t.bodyMedium.text(),
+        bodySmall = t.bodySmall.text(), labelLarge = t.labelLarge.text(FontWeight.SemiBold), labelMedium = t.labelMedium.text(FontWeight.Medium),
+        labelSmall = t.labelSmall.text(FontWeight.Medium, 0.08),
     )
 }
+
+private fun AppSettings.Theme.isDark(system: Boolean) = when (this) {
+    AppSettings.Theme.System -> system
+    AppSettings.Theme.Light -> false
+    AppSettings.Theme.Dark -> true
+}
+
+/** Light mode always uses slate blue; [darkAccent] is the user's dark-mode accent. */
+private fun typosaurusScheme(dark: Boolean, darkAccent: Color, keyboard: Boolean): ColorScheme =
+    if (dark) {
+        val onAccent = if (darkAccent.luminance() > 0.45f) Palette.DarkBase else Color.White
+        darkColorScheme(
+            primary = darkAccent, onPrimary = onAccent,
+            primaryContainer = darkAccent.mix(Color.Black, 0.72f), onPrimaryContainer = darkAccent,
+            secondary = darkAccent.mix(Color.Black, 0.3f), onSecondary = onAccent,
+            background = Palette.DarkBase, onBackground = Palette.OffWhite,
+            // The keyboard draws keys in `surface`; the app draws sheets and lists in it.
+            surface = if (keyboard) Palette.DarkKey else Palette.DarkSurface, onSurface = Palette.OffWhite,
+            surfaceVariant = if (keyboard) Palette.DarkSurface else Palette.DarkKey, onSurfaceVariant = Color(0xFFA8AFB8),
+            surfaceContainer = Palette.DarkSurface, surfaceContainerHigh = Color(0xFF24282C), surfaceContainerHighest = Palette.DarkKey,
+            outline = Color(0xFF3A3F45), error = Color(0xFFFF8A80),
+        )
+    } else {
+        lightColorScheme(
+            primary = Palette.SlateBlue, onPrimary = Color.White,
+            primaryContainer = Color(0xFFDCEBFB), onPrimaryContainer = Color(0xFF1C3F66),
+            secondary = Palette.Charcoal, onSecondary = Color.White,
+            background = Palette.LightBase, onBackground = Palette.Charcoal,
+            surface = Palette.LightKey, onSurface = Palette.Charcoal,
+            surfaceVariant = Color(0xFFE9EEF4), onSurfaceVariant = Color(0xFF5D6D7E),
+            surfaceContainer = Color.White, surfaceContainerHigh = Color.White, surfaceContainerHighest = Color.White,
+            outline = Color(0xFFC9D2DC),
+        )
+    }
 
 @Composable
 fun AppTheme(settings: AppSettings = AppSettings(), content: @Composable () -> Unit) {
-    val dark = when (settings.theme) {
-        AppSettings.Theme.System -> isSystemInDarkTheme()
-        AppSettings.Theme.Light -> false
-        AppSettings.Theme.Dark -> true
-    }
-    val accent = Color(settings.accentColor)
-    // Keep the accent readable: bright accents darken on paper, dark accents lighten on ink.
-    val primary = when {
-        dark && accent.luminance() < 0.25f -> accent.mix(Color.White, 0.35f)
-        !dark && accent.luminance() > 0.45f -> accent.mix(Color.Black, 0.45f)
-        else -> accent
-    }
-    val onPrimary = if (primary.luminance() > 0.45f) Brand.Ink else Color.White
-    val scheme = if (dark) darkColorScheme(
-        primary = primary, onPrimary = onPrimary,
-        primaryContainer = Brand.DinoGreen, onPrimaryContainer = Brand.Lime,
-        secondary = Brand.DinoGreen, onSecondary = Color.White,
-        background = Brand.Ink, onBackground = Color(0xFFF2F5EE),
-        surface = Color(0xFF121511), onSurface = Color(0xFFF2F5EE),
-        surfaceVariant = Color(0xFF1D231B), onSurfaceVariant = Color(0xFFB9C2B1),
-        surfaceContainer = Color(0xFF161A14), surfaceContainerHigh = Color(0xFF1D231B), surfaceContainerHighest = Color(0xFF262D23),
-        outline = Color(0xFF3A4436),
-    ) else lightColorScheme(
-        primary = primary, onPrimary = onPrimary,
-        primaryContainer = Brand.Lime, onPrimaryContainer = Brand.Ink,
-        secondary = Brand.DinoGreen, onSecondary = Color.White,
-        background = Brand.Paper, onBackground = Color(0xFF0E110C),
-        surface = Color.White, onSurface = Color(0xFF0E110C),
-        surfaceVariant = Color(0xFFE6EBDD), onSurfaceVariant = Color(0xFF4A5443),
-        surfaceContainer = Color(0xFFEFF2EA), surfaceContainerHigh = Color(0xFFE9EDE3), surfaceContainerHighest = Color(0xFFE2E7DA),
-        outline = Color(0xFFB9C2B1),
-    )
-    MaterialTheme(colorScheme = scheme, typography = AppTypography, content = content)
+    val dark = settings.theme.isDark(isSystemInDarkTheme())
+    MaterialTheme(typosaurusScheme(dark, Color(settings.accentColor), keyboard = false), typography = AppTypography, content = content)
 }
+
+/** The keyboard follows the phone's light/dark mode unless set otherwise in Settings › Keyboard. */
+@Composable
+fun KeyboardTheme(settings: AppSettings = AppSettings(), content: @Composable () -> Unit) {
+    val dark = settings.keyboardTheme.isDark(isSystemInDarkTheme())
+    MaterialTheme(typosaurusScheme(dark, Color(settings.keyboardAccent), keyboard = true), typography = AppTypography, content = content)
+}
+
+/** Dark-mode accent choices (Settings › Keyboard); the first is the default neon teal. */
+val KeyboardAccentChoices = listOf(AppSettings.NEON_TEAL, 0xFFBB86FC, 0xFF4A90E2, 0xFF38BDF8, 0xFFFF8A65, 0xFFF472B6)
 
 private fun Color.mix(other: Color, f: Float) =
     Color(red + (other.red - red) * f, green + (other.green - green) * f, blue + (other.blue - blue) * f, alpha)
-
-/** Accent choices offered in Settings > Keyboard; the first is the brand lime. */
-val AccentChoices = listOf(0xFFC6FF3D, 0xFF4CAF50, 0xFF3F51B5, 0xFF00BCD4, 0xFFC2185B, 0xFFFF9800)

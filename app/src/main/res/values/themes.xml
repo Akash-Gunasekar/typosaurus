@@ -10,5 +10,5 @@
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
     </style>
-    <color name="ic_launcher_background">#050505</color>
+    <color name="ic_launcher_background">#F5F7FA</color>
 </resources>

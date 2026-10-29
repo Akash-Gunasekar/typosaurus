@@ -4,6 +4,8 @@ import TyposaurusCore
 /// Toolbar (three lime AI buttons + ⋯) above a QWERTY layout, or the preview while a result streams in.
 struct KeyboardView: View {
     @ObservedObject var model: KeyboardModel
+    @Environment(\.colorScheme) private var scheme
+    private var p: KeyPalette { .of(scheme) }
 
     private let letters = [Array("qwertyuiop"), Array("asdfghjkl"), Array("zxcvbnm")].map { $0.map(String.init) }
     private let numbers = [Array("1234567890"), Array("-/:;()$&@\""), Array(".,?!'")].map { $0.map(String.init) }
@@ -22,7 +24,7 @@ struct KeyboardView: View {
             }
         }
         .padding(.horizontal, 4).padding(.vertical, 6)
-        .background(Brand.ink)
+        .background(p.background)
     }
 
     // MARK: top row
@@ -31,21 +33,21 @@ struct KeyboardView: View {
         switch model.phase {
         case let .streaming(title, _), let .preview(title, _, _):
             HStack {
-                Text(title).font(.inter(15, .semibold)).foregroundColor(Brand.text)
+                Text(title).font(.inter(15, .semibold)).foregroundColor(p.text)
                 Spacer()
-                if case .streaming = model.phase { ProgressView().tint(Brand.lime) }
+                if case .streaming = model.phase { ProgressView().tint(p.accent) }
             }.padding(.horizontal, 10)
         case let .failed(message, _):
             HStack {
                 Text(message).font(.inter(13)).foregroundColor(.red).lineLimit(2)
                 Spacer()
-                Button("Dismiss") { model.cancel() }.font(.inter(13, .semibold)).foregroundColor(Brand.lime)
+                Button("Dismiss") { model.cancel() }.font(.inter(13, .semibold)).foregroundColor(p.accent)
             }.padding(.horizontal, 10)
         case .applied:
             HStack {
-                Text("Applied ✓").font(.inter(15, .semibold)).foregroundColor(Brand.text)
+                Text("Applied ✓").font(.inter(15, .semibold)).foregroundColor(p.text)
                 Spacer()
-                Button("Undo") { model.undo() }.buttonStyle(LimeButtonStyle())
+                Button("Undo") { model.undo() }.buttonStyle(AccentButtonStyle(color: p.accent, textColor: p.onAccent))
             }.padding(.horizontal, 10)
         case .idle:
             HStack(spacing: 6) {
@@ -53,14 +55,14 @@ struct KeyboardView: View {
                     Button { model.run(action) } label: {
                         Text(action.icon).font(.system(size: 18))
                             .frame(width: 40, height: 40)
-                            .background(Brand.lime)
+                            .background(p.accent)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 }
                 Spacer()
                 Button { model.menuOpen.toggle() } label: {
                     Image(systemName: "ellipsis").font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(Brand.text).frame(width: 44, height: 40)
+                        .foregroundColor(p.text).frame(width: 44, height: 40)
                 }
             }
         }
@@ -71,21 +73,21 @@ struct KeyboardView: View {
     private var previewBody: some View {
         VStack(alignment: .leading, spacing: 10) {
             ScrollView {
-                Text(previewText).font(.inter(16)).foregroundColor(Brand.text)
+                Text(previewText).font(.inter(16)).foregroundColor(p.text)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(maxHeight: .infinity)
-            .padding(10).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(10).background(p.panel).clipShape(RoundedRectangle(cornerRadius: 12))
             HStack(spacing: 8) {
                 if case .preview = model.phase {
-                    Button("Accept") { model.accept() }.buttonStyle(LimeButtonStyle())
-                    Button("Retry") { model.retry() }.font(.inter(15, .semibold)).foregroundColor(Brand.text)
+                    Button("Accept") { model.accept() }.buttonStyle(AccentButtonStyle(color: p.accent, textColor: p.onAccent))
+                    Button("Retry") { model.retry() }.font(.inter(15, .semibold)).foregroundColor(p.text)
                     Spacer()
-                    Button { model.copyResult() } label: { Image(systemName: "doc.on.doc") }.foregroundColor(Brand.text)
+                    Button { model.copyResult() } label: { Image(systemName: "doc.on.doc") }.foregroundColor(p.text)
                 } else {
                     Spacer()
                 }
-                Button { model.cancel() } label: { Image(systemName: "xmark") }.foregroundColor(Brand.text).padding(.horizontal, 8)
+                Button { model.cancel() } label: { Image(systemName: "xmark") }.foregroundColor(p.text).padding(.horizontal, 8)
             }
         }
         .padding(.horizontal, 6)
@@ -108,10 +110,10 @@ struct KeyboardView: View {
                     Button { model.run(action) } label: {
                         VStack(spacing: 4) {
                             Text(action.icon).font(.system(size: 22))
-                            Text(action.name).font(.inter(12, .medium)).foregroundColor(Brand.text).lineLimit(1)
+                            Text(action.name).font(.inter(12, .medium)).foregroundColor(p.text).lineLimit(1)
                         }
                         .frame(maxWidth: .infinity).padding(.vertical, 10)
-                        .background(Brand.dinoGreen.opacity(0.6)).clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(p.panel).clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                 }
             }
@@ -155,10 +157,11 @@ struct KeyboardView: View {
                 if system { Image(systemName: label).font(.system(size: 17, weight: .medium)) }
                 else { Text(label).font(.inter(label.count > 1 ? 15 : 22, label.count > 1 ? .medium : .regular)) }
             }
-            .foregroundColor(highlighted ? Brand.ink : Brand.text)
+            .foregroundColor(highlighted ? p.onAccent : p.text)
             .frame(maxWidth: .infinity, minHeight: 44)
-            .background(highlighted ? Brand.lime : Brand.surfaceHigh)
+            .background(highlighted ? p.accent : p.key)
             .clipShape(RoundedRectangle(cornerRadius: 8))
+            .shadow(color: .black.opacity(0.12), radius: 0.5, x: 0, y: 1) // subtle key depth
         }
         .frame(width: width)
         .frame(maxWidth: width == nil ? .infinity : nil)

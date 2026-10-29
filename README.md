@@ -20,7 +20,7 @@
   </tr>
   <tr>
     <td align="center"><img src="docs/screenshots/home.png" width="180" alt="Home screen"><br><sub>Home</sub></td>
-    <td align="center"><img src="docs/screenshots/setup.png" width="180" alt="Setup and privacy notice"><br><sub>Setup and privacy notice</sub></td>
+    <td></td>
     <td></td>
   </tr>
 </table>
@@ -75,14 +75,53 @@ clipboard history are Android-only; iOS has the toolbar, all AI shortcuts, inlin
 
 ## How it works
 
+```mermaid
+flowchart LR
+    app(["📱 Any app<br/>text field"])
+    kb["⌨️ Typosaurus keyboard<br/>Android · Compose<br/>iOS · SwiftUI"]
+    runner{{"🧠 ActionRunner<br/>shared Kotlin core"}}
+    prompts[/"📝 Prompt templates<br/>+ your shortcuts"/]
+    trig[/"⚡ Trigger parser<br/>text /fix␣"/]
+    keys[("🔐 Your API key<br/>Keystore · Keychain")]
+    route{"Provider<br/>router"}
+    oa[["OpenAI · Groq<br/>OpenRouter · Ollama"]]
+    an[["Anthropic<br/>Claude"]]
+
+    app -- "selection or field" --> kb
+    kb -- "tap ✨ or type /fix␣" --> runner
+    prompts --> runner
+    trig --> runner
+    keys -. "read only for the request" .-> runner
+    runner -- "HTTPS · retry · fallback" --> route
+    route --> oa
+    route --> an
+    oa -- "streamed result" --> kb
+    an -- "streamed result" --> kb
+    kb -- "Accept · Undo" --> app
+
+    classDef ink fill:#050505,stroke:#C6FF3D,color:#F2F5EE,stroke-width:2px
+    classDef lime fill:#C6FF3D,stroke:#2F4A22,color:#050505,stroke-width:2px
+    classDef green fill:#2F4A22,stroke:#C6FF3D,color:#F2F5EE
+    class app,oa,an ink
+    class kb,runner lime
+    class prompts,trig,keys,route green
 ```
-any app's text field ──InputConnection──▶ Typosaurus keyboard (Compose)
-                                              │  tap ✨ / type "/fix␣"
-                                              ▼
-                          ActionRunner (shared Kotlin core)
-                 prompt templates · trigger parser · retry + fallback
-                                              │ HTTPS, your key
-                        OpenAI-compatible ◀───┴───▶ Anthropic Messages
+
+Every AI action goes through the same small state machine, so nothing reaches your text until you accept it:
+
+```mermaid
+stateDiagram-v2
+    direction LR
+    [*] --> Idle
+    Idle --> Streaming: tap ✨ / type /fix␣
+    Streaming --> Preview: result streamed
+    Streaming --> Failed: offline · bad key · timeout
+    Preview --> Applied: Accept
+    Preview --> Streaming: Retry
+    Preview --> Idle: Cancel
+    Applied --> Idle: Undo (5 s) or keep typing
+    Failed --> Streaming: Retry
+    Failed --> Idle: Dismiss
 ```
 
 | Module | What | Platforms |
@@ -119,6 +158,6 @@ that compiles the shared core for iOS and builds the app and keyboard extension 
 - Add the Play upload-key secrets and set the repo variable `PLAY_RELEASE=true` to enable the signed release job.
 - Get a security/privacy review before distributing to an organisation: a keyboard can see everything typed.
 
-## Credits
+---
 
-Typeface: [Inter](https://rsms.me/inter/) by Rasmus Andersson, SIL Open Font License ([branding/Inter-OFL.txt](branding/Inter-OFL.txt)).
+<p align="center">Made with ❤️ by <b>Akash Gunasekar</b></p>

@@ -15,7 +15,7 @@ dependencyResolutionManagement {
         mavenCentral()
     }
 }
-rootProject.name = "ai-keyboard"
+rootProject.name = "typosaurus"
 include(":core")
 if (!coreOnly) {
     include(":data", ":app")

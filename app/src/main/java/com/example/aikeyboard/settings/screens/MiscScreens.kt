@@ -48,7 +48,7 @@ import com.example.aikeyboard.R
 import com.example.aikeyboard.core.action.AppSettings
 import com.example.aikeyboard.core.provider.ProviderCatalog
 import com.example.aikeyboard.ime.FieldPolicy
-import com.example.aikeyboard.ime.ui.AccentChoices
+import com.example.aikeyboard.ime.ui.KeyboardAccentChoices
 import com.example.aikeyboard.settings.SettingsViewModel
 
 @Composable
@@ -103,14 +103,16 @@ fun KeyboardPrefsScreen(vm: SettingsViewModel, nav: NavController) {
             OutlinedButton(onClick = { micLauncher.launch(Manifest.permission.RECORD_AUDIO) }) { Text("Allow microphone") }
         }
         HorizontalDivider()
-        DropdownField("Theme", cfg.theme.name, AppSettings.Theme.entries.map { it.name to it }) { t -> vm.update { it.copy(theme = t) } }
-        SectionTitle("Accent colour")
+        DropdownField("Keyboard theme (System follows your phone)", cfg.keyboardTheme.name, AppSettings.Theme.entries.map { it.name to it }) { t -> vm.update { it.copy(keyboardTheme = t) } }
+        DropdownField("App theme", cfg.theme.name, AppSettings.Theme.entries.map { it.name to it }) { t -> vm.update { it.copy(theme = t) } }
+        SectionTitle("Accent in dark mode")
+        Hint("Light mode uses slate blue. In dark mode, buttons and the Enter key use this colour.")
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            AccentChoices.forEach { c ->
+            KeyboardAccentChoices.forEach { c ->
                 Box(
                     Modifier.size(36.dp).clip(CircleShape).background(Color(c))
-                        .border(if (cfg.accentColor == c) 3.dp else 0.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
-                        .clickable { vm.update { it.copy(accentColor = c) } },
+                        .border(if (cfg.keyboardAccent == c) 3.dp else 0.dp, MaterialTheme.colorScheme.onSurface, CircleShape)
+                        .clickable { vm.update { it.copy(keyboardAccent = c, accentColor = c) } },
                 )
             }
         }

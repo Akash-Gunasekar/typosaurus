@@ -6,7 +6,12 @@ import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.toArgb
+import androidx.core.view.WindowCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.doOnPreDraw
@@ -25,7 +30,7 @@ import com.example.aikeyboard.core.runner.ActionRunner
 import com.example.aikeyboard.core.runner.MetricEvent
 import com.example.aikeyboard.data.DeviceState
 import com.example.aikeyboard.graph
-import com.example.aikeyboard.ime.ui.AppTheme
+import com.example.aikeyboard.ime.ui.KeyboardTheme
 import com.example.aikeyboard.ime.ui.Key
 import com.example.aikeyboard.ime.ui.KeyboardHandlers
 import com.example.aikeyboard.ime.ui.KeyboardScreen
@@ -141,7 +146,9 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
                 val shift by autoShift.collectAsState()
                 val clipItems by clips.items.collectAsState()
                 val voiceState by voice.state.collectAsState()
-                AppTheme(cfg) {
+                KeyboardTheme(cfg) {
+                    val bg = MaterialTheme.colorScheme.background
+                    LaunchedEffect(bg) { tintNavigationBar(bg.toArgb(), bg.luminance() > 0.5f) }
                     KeyboardScreen(
                         field = field, runner = state, inputTruncated = runner.inputTruncated, online = isOnline,
                         settings = cfg, actions = actions, autoShift = shift, clips = clipItems, voice = voiceState,
@@ -212,6 +219,14 @@ class AiKeyboardService : InputMethodService(), LifecycleOwner, ViewModelStoreOw
         } else {
             text.commit("\n")
         }
+    }
+
+    /** The strip under the keys (gesture bar / buttons) takes the keyboard's background. */
+    private fun tintNavigationBar(color: Int, light: Boolean) {
+        val w = window.window ?: return
+        @Suppress("DEPRECATION")
+        w.navigationBarColor = color
+        WindowCompat.getInsetsController(w, w.decorView).isAppearanceLightNavigationBars = light
     }
 
     private fun openSettings(route: String, requestMic: Boolean = false) {

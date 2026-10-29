@@ -74,7 +74,7 @@ fun ActionsScreen(vm: SettingsViewModel, nav: NavController) {
         Hint("Shortcuts appear as chips in the keyboard toolbar and as inline triggers (type the keyword after your prefix, then space).")
         Button(onClick = { nav.navigate("action/new") }) { Icon(Icons.Default.Add, null); Text(" New shortcut") }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { export.launch("ai-keyboard-shortcuts.json") }) { Text("Export") }
+            OutlinedButton(onClick = { export.launch("typosaurus-shortcuts.json") }) { Text("Export") }
             OutlinedButton(onClick = { import.launch(arrayOf("application/json", "text/*", "*/*")) }) { Text("Import") }
         }
         actions.forEachIndexed { i, a ->

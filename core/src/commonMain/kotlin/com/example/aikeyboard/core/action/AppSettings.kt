@@ -26,8 +26,12 @@ data class AppSettings(
     /** "providerId:model" -> parameter quirks. */
     val modelQuirks: Map<String, ModelQuirks> = emptyMap(),
 
-    val theme: Theme = Theme.Dark,
-    val accentColor: Long = BRAND_LIME,
+    val theme: Theme = Theme.System,
+    /** Accent in dark mode (light mode always uses slate blue). */
+    val accentColor: Long = NEON_TEAL,
+    /** The keyboard follows the phone's light/dark mode by default, in its own sky-blue palette. */
+    val keyboardTheme: Theme = Theme.System,
+    val keyboardAccent: Long = NEON_TEAL,
     val haptics: Boolean = true,
     val keySound: Boolean = false,
     val numberRow: Boolean = true,
@@ -53,11 +57,12 @@ data class AppSettings(
 
     /** Move installs from before the Typosaurus rebrand onto the brand theme, once. */
     fun migrated(): AppSettings =
-        if (styleVersion >= STYLE_VERSION) this else copy(theme = Theme.Dark, accentColor = BRAND_LIME, styleVersion = STYLE_VERSION)
+        if (styleVersion >= STYLE_VERSION) this
+        else copy(theme = Theme.System, accentColor = NEON_TEAL, keyboardAccent = NEON_TEAL, styleVersion = STYLE_VERSION)
 
     companion object {
-        const val BRAND_LIME = 0xFFC6FF3D
-        const val STYLE_VERSION = 1
+        const val NEON_TEAL = 0xFF00E676
+        const val STYLE_VERSION = 3 // 3: minimalist light / stealth dark palette, follows the phone
         val ALLOWED_PREFIXES = listOf("/", "//", "!", "\\")
     }
 }

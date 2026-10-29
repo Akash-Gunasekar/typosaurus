@@ -63,7 +63,7 @@ fun ScreenScaffold(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(title) },
+                title = { Text(title, style = MaterialTheme.typography.headlineMedium) },
                 navigationIcon = {
                     if (nav != null && nav.previousBackStackEntry != null) {
                         IconButton(onClick = { nav.popBackStack() }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back") }
