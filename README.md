@@ -71,12 +71,7 @@ adb install -r app/build/outputs/apk/release/app-release.apk
 Open **Typosaurus**: setup walks through enabling the keyboard, selecting it, the privacy notice and adding a key.
 Without the Play upload key, local release builds are signed with the debug key — fine for testing, never upload them.
 
-From the command line instead:
 
-```bash
-adb shell ime enable com.example.aikeyboard/.ime.AiKeyboardService
-adb shell ime set    com.example.aikeyboard/.ime.AiKeyboardService
-```
 
 ## iOS
 
